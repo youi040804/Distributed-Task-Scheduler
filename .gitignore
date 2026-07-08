@@ -1,0 +1,19 @@
+# Build directory
+build/
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Executables
+*.out
+*.exe
+
+# CMake generated files
+CMakeCache.txt
+cmake_install.cmake
