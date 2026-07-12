@@ -1,8 +1,7 @@
 #pragma once
-
-#include<iostream>
 #include<string>
 
+namespace dts{
 enum class TaskStatus
 {
 PENDING,
@@ -23,8 +22,15 @@ public:
     Task(int id ,const std::string& command);//const引用string，避免发生拷贝
     int getTaskId() const;
     TaskStatus getTaskStatus() const;
-    std::string getTaskPayload();
-    int getTaskPriority();
     void setStatus(TaskStatus status);
+
+    const std::string& getTaskPayload() const;
+    int getTaskPriority() const;
+    int getAssignedWorker() const;
+
+    void increaseRetryCount();
+    int getRetryCount() const;
+
 };
 
+}

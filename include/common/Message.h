@@ -1,16 +1,18 @@
 #pragma once
-
-#include<iostream>
 #include<string>
+
+namespace dts{
 enum class MessageType{
-//Client
-SUBMIT_TASK,
-//Worker
-REGISTER_WORKER,
-HEARTBEAT,
-TASK_RESULT,
-//Master
-TASK_ASSIGN
+    // Client → Master
+    SUBMIT_TASK = 1,
+    
+    // Worker → Master
+    REGISTER_WORKER = 10,
+    HEARTBEAT = 11,
+    TASK_RESULT = 12,
+    
+    // Master → Worker
+    TASK_ASSIGN = 20
 };
 
 struct Message{
@@ -18,3 +20,4 @@ MessageType type;
 std::string data;
 
 };
+}
