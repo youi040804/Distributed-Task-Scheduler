@@ -4,10 +4,10 @@
 namespace dts{
 enum class TaskStatus
 {
-PENDING,
-RUNNING,
-FAILED,
-DONE
+PENDING=0,
+RUNNING=1,
+FAILED=2,
+DONE=3
 };
 
 class Task{

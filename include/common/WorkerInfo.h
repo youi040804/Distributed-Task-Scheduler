@@ -10,14 +10,15 @@ private:
     std::chrono::system_clock::time_point  last_heartbeat_time_;//只记录最后一次Heartbeat
     bool alive_;
 public:
-int getWorkeId()const;
-size_t getRunningTaskCount() const;
+    WorkerInfo(int workerId);
+    int getWorkerId()const;
+    size_t getRunningTaskCount() const;
 
-void updateHeartbeat();
-void increaseTaskCount();
-void decreaseTaskCount();
-bool isAlive() const;
-void markDead();
+    void updateHeartbeat();
+    void increaseTaskCount();
+    void decreaseTaskCount();
+    bool isAlive() const;
+    void markDead();
 
 };
 

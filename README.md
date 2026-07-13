@@ -2,7 +2,6 @@
 
 ## Architecture
 
-
 ![Master-Worker Architecture](./images/architecture.png)
 ## Features
 
