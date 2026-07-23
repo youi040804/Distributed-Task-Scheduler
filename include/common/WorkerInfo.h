@@ -1,3 +1,7 @@
+/*
+ * WorkerInfo.h
+ * Worker 信息类，包含 Worker ID、运行任务数、心跳时间、存活状态
+ */
 #pragma once
 
 #include<string>

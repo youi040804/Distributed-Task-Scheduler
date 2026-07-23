@@ -1,7 +1,10 @@
+/*
+ * Connection.h
+ * 网络连接类，封装 TCP 连接的发送/接收/关闭
+ */
 #pragma once
 
 #include <netinet/in.h>
-
 #include<string>
 namespace dts{
 class Connection{

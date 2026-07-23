@@ -1,3 +1,8 @@
+/*
+ * Task.h
+ * 任务类，包含任务 ID、状态、负载、优先级、重试次数、分配 Worker
+ */
+
 #pragma once
 #include<string>
 

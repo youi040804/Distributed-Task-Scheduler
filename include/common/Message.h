@@ -1,3 +1,7 @@
+/*
+ * Message.h
+ * 消息相关定义，包括消息类型和消息结构体
+ */
 #pragma once
 #include<string>
 

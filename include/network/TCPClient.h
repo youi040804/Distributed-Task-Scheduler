@@ -1,4 +1,9 @@
+/*
+ * TCPClient.h
+ * TCP 客户端类，连接服务器并管理连接
+ */
 #pragma once
+
 #include "Connection.h"
 #include<memory>
 #include<string>
