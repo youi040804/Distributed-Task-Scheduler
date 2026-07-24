@@ -19,9 +19,5 @@ public:
     void disconnect();
     int fd()const;
 
-
 };
-
-
-
 }
