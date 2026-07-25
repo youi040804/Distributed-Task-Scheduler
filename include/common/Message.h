@@ -16,7 +16,9 @@ enum class MessageType{
     TASK_RESULT = 12,
     
     // Master → Worker
-    TASK_ASSIGN = 20
+    TASK_ASSIGN = 20,
+
+    UNKNOWN=-1
 };
 
 struct Message{
