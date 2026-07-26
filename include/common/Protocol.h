@@ -1,7 +1,10 @@
 /*
-*Protocol.h
-*序列化格式约定： "MessageType|data"
-*例如："REGISTER_WORKER|1|192.168.1.100|8080"
+Protocol序列化格式：
+length|type|data
+其中：
+length = data长度
+type = MessageType
+data = 业务数据
 */
 #pragma once
 #include<string>
@@ -30,7 +33,7 @@ class Protocol{
 
 public:
     //序列化，将Message转成string（用于发送）
-    static std::string serialize(const Message&msg);
+    static std::string serialize(Message&msg);
     //反序列化：将string转成Message（用于接收）
     static Message deserialize(const std::string&raw);
 
@@ -53,8 +56,8 @@ private:
 
 public:
     template<typename T>
-    MessageBuilder&operator<<(T value){
-        if(!fisrt) oss<<"|";
+    MessageBuilder&operator<<(const T&value){
+        if(!first) oss<<"|";
         oss<<value;
         first=false;
         return *this;
@@ -84,7 +87,7 @@ public:
     template<typename T>
     MessageParser&operator>>(T &value){
         if(index<parts.size()){
-            std::istringstream iss(parts.index[++]);
+            std::istringstream iss(parts[index++]);
             iss>>value;
         }
         return *this;

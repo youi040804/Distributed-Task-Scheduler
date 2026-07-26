@@ -1,21 +1,34 @@
 /*
 *Protocol.cpp
+*序列化格式约定 ："MessageHeader|data"
+*即：length|type|data
+*例如："100|REGISTER_WORKER|1|192.168.1.100|8080"
 */
 #include"../../include/common/Protocol.h"
 namespace dts{
 
-std::string Protocol::serialize(const Message&msg){
-    return messageTypeToString(msg.type)+"|"+msg.data;
+std::string Protocol::serialize(Message&msg){
+    msg.header.length=msg.data.size();
+    
+    std::string len=std::to_string(msg.header.length);
+    std::string type=messageTypeToString(msg.header.type);
+    return len+"|"+type+"|"+msg.data;
 
  }
     //反序列化：将string转成Message（用于接收）
 Message Protocol::deserialize(const std::string&raw){
-    size_t pos=raw.find("|");
-    std::string type=raw.substr(0,pos);
-    std::string data=raw.substr(pos+1);
     Message msg;
-    msg.type=stringToMessageType(raw);
-    msg.data=data;
+    //MessageHeader header=msg.header;
+
+    //截取length字段
+    size_t pos1=raw.find("|");
+    msg.header.length=static_cast<uint32_t>(std::stoul(raw.substr(0,pos1)));
+    //截取type字段
+    size_t pos2=raw.find("|",pos1+1);
+    msg.header.type=stringToMessageType(raw.substr(pos1+1,pos2-(pos1+1)));
+    //截取data字段
+    msg.data=raw.substr(pos2+1);
+ 
     return msg;
 
 }

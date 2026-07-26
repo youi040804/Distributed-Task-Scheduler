@@ -4,9 +4,10 @@
  */
 #pragma once
 #include<string>
-
+#include <cstdint>
 namespace dts{
-enum class MessageType{
+enum class MessageType:uint16_t 
+{
     // Client → Master
     SUBMIT_TASK = 1,
     
@@ -18,11 +19,15 @@ enum class MessageType{
     // Master → Worker
     TASK_ASSIGN = 20,
 
-    UNKNOWN=-1
+    UNKNOWN=0
+};
+struct MessageHeader{
+    uint32_t length;//body长度,length=data.size()
+    MessageType type; 
 };
 
 struct Message{
-MessageType type;
+MessageHeader header;
 std::string data;
 
 };
