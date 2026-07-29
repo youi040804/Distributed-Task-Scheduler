@@ -16,4 +16,5 @@ Thumbs.db
 
 # CMake generated files
 CMakeCache.txt
-cmake_install.cmaketests/
+cmake_install.cmake
+tests/
