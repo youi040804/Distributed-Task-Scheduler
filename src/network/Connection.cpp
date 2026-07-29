@@ -5,37 +5,63 @@
 #include<sys/socket.h>
 #include<unistd.h>
 #include<stdexcept> // for std::runtime_error
+#include<optional>// for std::nullopt
 #include"../../include/network/Connection.h"
-
+#include"../../include/common/Protocol.h"
 namespace dts{
 
     Connection::Connection(int fd,sockaddr_in addr)
     :fd_(fd),peer_addr_(addr){
     }
-    bool Connection::send(const std::string&data){
-        if(data.empty())return true;//空数据直接成功
-        size_t  sent_len=0;
-        size_t  total_len=data.size();
+
+    
+    //sendMessage调用序列化函数
+
+    bool Connection::sendMessage(Message&msg){
+
+        std::string raw=Protocol::serialize(msg);
+        //调用底层send函数
+    return send(raw,raw.size());
+
+    }
+
+    bool Connection::send(const std::string&data,uint32_t total_len){
+        if(total_len==0) return false;//通过读取length字段判断数据是否为空
+        uint32_t  sent_len=0;
+        
         while(sent_len<total_len){
-            //从上次发送位置开始，继续发送剩余长度
-            ssize_t n=::send(fd(),data.c_str()+sent_len,data.size()-sent_len,0);
-            if(n<=0){
-                return false;
-            }else{
-                sent_len+=static_cast<size_t>(n);
-            }
+                //从上次发送位置开始，继续发送剩余长度
+                ssize_t n=::send(fd(),data.c_str()+sent_len,total_len-sent_len,0);
+                if(n<=0){
+                    return false;
+                }else{
+                    sent_len+=static_cast<size_t>(n);
+                }
         }
         return true;
     }
-    std::string Connection::recv(){
-        char buffer[1000];
-        ssize_t n=::recv(fd(),buffer,sizeof(buffer)-1,0);
-        if(n<=0){
-            return "";
-        }else{
-            buffer[n]='\0';
-            return (std::string)buffer;
+
+
+    Message Connection::receiveMessage(){
+    
+        std::string raw=recv();
+        if(raw.empty()){
+            return Message{}; 
         }
+        Message msg=Protocol::deserialize(raw);
+        return msg;
+    }
+
+    std::string Connection::recv(){
+    char buffer[1000];
+    ssize_t n=::recv(fd(),buffer,sizeof(buffer)-1,0);
+    if(n<=0){
+        return "";
+    }else{
+        buffer[n]='\0';
+        return (std::string)buffer;
+    }
+
     }
 
     void Connection::disconnect(){

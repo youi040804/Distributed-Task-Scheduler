@@ -14,7 +14,7 @@ std::string Protocol::serialize(Message&msg){
     std::string type=messageTypeToString(msg.header.type);
     return len+"|"+type+"|"+msg.data;
 
- }
+}
     //反序列化：将string转成Message（用于接收）
 Message Protocol::deserialize(const std::string&raw){
     Message msg;
@@ -46,7 +46,7 @@ WorkerRegisterInfo Protocol:: deserializeWorkerInfo(const std::string&data){
     parser>>workerinfo.ip;
     parser>>workerinfo.port;
     return workerinfo;
-    }
+}
     //辅助函数：将枚举类转为字符串
 std::string Protocol::messageTypeToString(MessageType type){
     switch(type){

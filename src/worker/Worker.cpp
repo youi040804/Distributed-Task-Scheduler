@@ -1,11 +1,11 @@
 /*
  * Worker.cpp
- * Worker 类的实现
+ * Worker 类的实现，包含连接 Master、注册自身等逻辑
  */
 #include <arpa/inet.h> 
 #include <cstring> 
 #include"../../include/worker/Worker.h"
-
+ #include "../../include/common/Message.h"
 namespace dts{
 
     Worker::Worker(int worker_id):worker_id_(worker_id),worker_client_(nullptr){
@@ -31,23 +31,28 @@ namespace dts{
         return worker_client_->connect();    
     }
 
-    bool Worker::registerToMaster(std::string&data){
+    //由原来的发送字符串改为发送真正的Message
+    bool Worker::registerToMaster(Message&msg){
+
         Connection* conn=worker_client_->getConnection();
-        return conn->send(data);
+        return conn->sendMessage(msg);
     }
 
-    bool Worker::start(int worker_id,std::string&data,
-        const std::string&master_ip,int master_port){
-        Worker* worker=new Worker(worker_id);
-        worker->setMasterAddress(master_ip,master_port);
-        int connect_result=worker->connectMaster();
-        int register_result=worker->registerToMaster(data);
+    bool Worker::start(Message&msg,const std::string&master_ip,int master_port){
+        this->setMasterAddress(master_ip,master_port);
+        int connect_result=this->connectMaster();
+        if(!connect_result) {
+            perror("worker connect failed!");
+            return false;
+        }
+        int register_result=this->registerToMaster(msg);
 
-        if(!connect_result ||!register_result ){
-            perror("worker start failed");
+        if(!register_result){
+            perror("worker start failed!");
             return false;
         }
         return true;
     }
+
 
 }
