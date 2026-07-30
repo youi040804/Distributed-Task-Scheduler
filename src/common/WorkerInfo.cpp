@@ -3,7 +3,7 @@
  * WorkerInfo 类的实现，管理单个 Worker 的状态信息
  */
 #include"../../include/common/WorkerInfo.h"
-
+#include<iostream>
 namespace dts{
 
 WorkerInfo::WorkerInfo(int workerId, const std::string& workerIp,int workerPort)
@@ -19,7 +19,7 @@ WorkerInfo::WorkerInfo(int workerId, const std::string& workerIp,int workerPort)
 int WorkerInfo::getWorkerId()const{
     return worker_id_;
 }
-std::string WorkerInfo::getIp()const{
+const std::string& WorkerInfo::getIp()const{
     return worker_ip_;
 }
 int WorkerInfo::getPort()const{
@@ -28,9 +28,17 @@ int WorkerInfo::getPort()const{
 size_t WorkerInfo::getRunningTaskCount()const{
     return running_task_count_;
 }
+std::chrono::system_clock::time_point WorkerInfo::getLastHeartbeatTime()const{
+    return last_heartbeat_time_;
+}
+void WorkerInfo::setRunningTaskCount(size_t count){
+    running_task_count_=count;
+}
 
 void WorkerInfo::updateHeartbeat(){
     //更新last_heartbeat_time_
+    last_heartbeat_time_=std::chrono::system_clock::now();
+
 }
 void WorkerInfo::increaseTaskCount(){
     running_task_count_++;
@@ -40,11 +48,24 @@ void WorkerInfo::decreaseTaskCount(){
         running_task_count_--;
     }
 }
+bool WorkerInfo::isOverTime(){
+    auto now=std::chrono::system_clock::now();
+    if(now-last_heartbeat_time_>std::chrono::seconds(10)){
+        std::cout<<"heartbeat time out!"<<std::endl;
+        return true;
+    }
+    return false;
+}
+
 bool WorkerInfo::isAlive() const{
     return alive_;
 }
 void WorkerInfo::markDead(){
     alive_=false;
+}
+
+void WorkerInfo::setAlive(bool){
+
 }
 
 }

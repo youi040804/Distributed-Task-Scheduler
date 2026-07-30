@@ -41,6 +41,11 @@ public:
     static std::string serializeWorkerInfo(const WorkerRegisterInfo&info);
     static WorkerRegisterInfo deserializeWorkerInfo(const std::string&data);
 
+    //辅助函数：HeartbeatInfo--string
+    static std::string serializeHeartbeatInfo(const HeartbeatInfo&info);
+    static HeartbeatInfo deserializeHeartbeatInfo(const std::string&data);
+    
+
     //辅助函数：将枚举类转为字符串
     static std::string messageTypeToString(MessageType type) ;
     //辅助函数：将字符串转为枚举类

@@ -6,23 +6,31 @@
 #include<sys/socket.h>
 #include<memory>
 #include<string>
+#include <atomic>
 #include"../network/TCPClient.h"
 #include "../common/Message.h"  
 namespace dts{
 class Worker{
 private:
-int worker_id_;
-sockaddr_in   master_addr_ ;
-std::unique_ptr<TCPClient>worker_client_;
+    int worker_id_;
+    sockaddr_in   master_addr_ ;
+    bool running_;
+    std::unique_ptr<TCPClient>worker_client_;
+    bool sendToMaster(Message& msg); 
+
+    std::atomic<size_t> running_task_count_; 
 
 public:
-explicit Worker(int worker_id);
-void setMasterAddress(const std::string& master_ip, int master_port);
-bool connectMaster();
+    explicit Worker(int worker_id);
+    void setMasterAddress(const std::string& master_ip, int master_port);
+    bool connectMaster();
 
-bool registerToMaster(Message&msg);
-bool start(Message&msg,const std::string&master_ip,int master_port);
+    bool start(const std::string& master_ip, int master_port,
+            const std::string& worker_ip, int worker_port); 
 
+    void increaseTaskCount();
+    void decreaseTaskCount();
+    void run();
 
 };
 }

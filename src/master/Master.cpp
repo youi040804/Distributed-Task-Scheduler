@@ -23,7 +23,7 @@ bool Master::start(){
 }
 
 void Master::handleWorkerRegister(const WorkerRegisterInfo&RegisterInfo){
-    if(worker_manager_.IsWorkerExist(RegisterInfo.worker_id)) 
+    if(worker_manager_.getWorkerInfo(RegisterInfo.worker_id)!=nullptr) 
     {
         std::cout<<"worker already exists!"<<std::endl;
         return ;//如果worker存在直接返回
@@ -52,7 +52,12 @@ void Master::run(){
                 }
             // case dts::MessageType::TASK_RESULT:{}
 
-            //  case dts::MessageType::HEARTBEAT:{}
+                case dts::MessageType::HEARTBEAT:{
+                    HeartbeatInfo info=Protocol::deserializeHeartbeatInfo(msg.data);
+                    worker_manager_.updateWorkerHeartBeat(info.worker_id);
+                    worker_manager_.updateWorkerTaskCount(info.worker_id,info.running_task_count);
+                    break;
+                }
 
                 default:{
                     std::cerr<<"Unknown message type"<<std::endl;

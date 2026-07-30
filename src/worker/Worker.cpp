@@ -4,8 +4,12 @@
  */
 #include <arpa/inet.h> 
 #include <cstring> 
+#include <thread>
 #include"../../include/worker/Worker.h"
- #include "../../include/common/Message.h"
+#include"../../include/common/WorkerInfo.h"
+#include"../../include/common/Protocol.h"
+
+
 namespace dts{
 
     Worker::Worker(int worker_id):worker_id_(worker_id),worker_client_(nullptr){
@@ -13,6 +17,7 @@ namespace dts{
         master_addr_.sin_family=AF_INET;
 
     }
+
     void Worker::setMasterAddress(const std::string&master_ip,int master_port){
     master_addr_.sin_port=htons(master_port);
         if (inet_pton(AF_INET, master_ip.c_str(), &master_addr_.sin_addr) != 1) {
@@ -21,6 +26,7 @@ namespace dts{
         }
 
     }
+
     bool Worker::connectMaster()
     {
         worker_client_=std::make_unique<dts::TCPClient>(
@@ -32,27 +38,67 @@ namespace dts{
     }
 
     //由原来的发送字符串改为发送真正的Message
-    bool Worker::registerToMaster(Message&msg){
-
+    bool Worker::sendToMaster(Message&msg){
         Connection* conn=worker_client_->getConnection();
         return conn->sendMessage(msg);
     }
 
-    bool Worker::start(Message&msg,const std::string&master_ip,int master_port){
+
+
+    bool Worker::start(const std::string& master_ip, int master_port,
+                       const std::string& worker_ip, int worker_port){
+        //1.连接Master
         this->setMasterAddress(master_ip,master_port);
         int connect_result=this->connectMaster();
         if(!connect_result) {
             perror("worker connect failed!");
             return false;
         }
-        int register_result=this->registerToMaster(msg);
+        // 2. 构造注册消息（用传入的参数）
+        WorkerRegisterInfo info;
+        info.worker_id = worker_id_;
+        info.ip = worker_ip;      
+        info.port = worker_port;  
 
-        if(!register_result){
+        //3.发送注册消息
+        Message msg;
+        msg.header.type=MessageType::REGISTER_WORKER;
+        msg.data=Protocol::serializeWorkerInfo(info);
+
+        if(!sendToMaster(msg)){
             perror("worker start failed!");
             return false;
         }
+
+        running_=true;
         return true;
     }
 
+
+    void Worker::increaseTaskCount() { 
+        running_task_count_++; 
+    }
+    void Worker::decreaseTaskCount() {
+         if (running_task_count_ > 0) 
+         running_task_count_--; 
+    }
+
+    void Worker::run(){
+        while(running_){
+
+        // 1. 构造心跳消息
+        HeartbeatInfo info;
+        info.worker_id=worker_id_;
+        //info.running_task_count=running_task_count_;
+        info.running_task_count = 0;  // 暂时写 0
+        
+        //每隔3秒发送一次心跳消息
+        Message msg;
+        msg.header.type=MessageType::HEARTBEAT;
+        msg.data=Protocol::serializeHeartbeatInfo(info);
+        sendToMaster(msg);
+        std::this_thread::sleep_for(std::chrono::seconds(3));
+        }
+    }
 
 }

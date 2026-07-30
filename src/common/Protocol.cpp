@@ -47,6 +47,22 @@ WorkerRegisterInfo Protocol:: deserializeWorkerInfo(const std::string&data){
     parser>>workerinfo.port;
     return workerinfo;
 }
+
+
+//辅助函数：HeartbeatInfo--string
+std::string Protocol::serializeHeartbeatInfo(const HeartbeatInfo&info){
+    MessageBuilder builder;
+    builder<<info.worker_id<<info.running_task_count;
+    return builder.str();
+}
+HeartbeatInfo Protocol::deserializeHeartbeatInfo(const std::string&data){
+    MessageParser parser(data);
+    HeartbeatInfo heartbeatinfo;
+    parser>>heartbeatinfo.worker_id;
+    parser>>heartbeatinfo.running_task_count;
+    return heartbeatinfo;
+}
+    
     //辅助函数：将枚举类转为字符串
 std::string Protocol::messageTypeToString(MessageType type){
     switch(type){

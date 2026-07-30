@@ -18,16 +18,19 @@ private:
 public:
     WorkerInfo(int workerId,const std::string& workerIp,int workerPort);
     int getWorkerId()const;
-    std::string getIp()const;
+    const std::string&getIp()const;
     int getPort()const;
+    std::chrono::system_clock::time_point getLastHeartbeatTime()const;
 
     size_t getRunningTaskCount() const;
-
+    void setRunningTaskCount(size_t count);
     void updateHeartbeat();
     void increaseTaskCount();
     void decreaseTaskCount();
+    bool isOverTime();
     bool isAlive() const;
     void markDead();
+    void setAlive(bool);
 
 };
 

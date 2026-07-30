@@ -12,9 +12,13 @@ private:
 std::unordered_map<int,WorkerInfo> workers_;//key:workerId,value:WorkerInfo
 public:
 void addWorker(WorkerInfo&& worker);
-bool IsWorkerExist(int WorkerId);
 
 const WorkerInfo* getWorkerInfo(int workerId) const;
+
+void updateWorkerHeartBeat(int workerId);
+void updateWorkerTaskCount(int workerId, size_t taskCount);
+void markWorkerDead(int workerId);
+
 
 };
 

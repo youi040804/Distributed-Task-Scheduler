@@ -19,7 +19,7 @@ namespace dts{
 
     bool Connection::sendMessage(Message&msg){
 
-        std::string raw=Protocol::serialize(msg);
+    std::string raw=Protocol::serialize(msg);
         //调用底层send函数
     return send(raw,raw.size());
 
