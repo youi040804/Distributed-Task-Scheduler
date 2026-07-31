@@ -3,8 +3,9 @@
  * TCP 客户端测试
  */
 
-#include "../../include/network/TCPClient.h"
+#include "network/TCPClient.h"
 #include <iostream>
+#include <string>
 
 int main() {
     std::cout << "Client starting..." << std::endl;
@@ -19,7 +20,8 @@ int main() {
         auto conn = client.getConnection();
         if (conn) {
             std::cout << "Sending..." << std::endl;
-            bool sent = conn->send("hello network");
+            std::string msg = "hello network";
+            bool sent = conn->send(msg, msg.size());
             std::cout << "Sent: " << sent << std::endl;
         }
     }

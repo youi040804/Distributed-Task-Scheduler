@@ -2,7 +2,7 @@
  * WorkerInfo.cpp
  * WorkerInfo 类的实现，管理单个 Worker 的状态信息
  */
-#include"../../include/common/WorkerInfo.h"
+#include"common/WorkerInfo.h"
 #include<iostream>
 namespace dts{
 
@@ -38,7 +38,7 @@ void WorkerInfo::setRunningTaskCount(size_t count){
 void WorkerInfo::updateHeartbeat(){
     //更新last_heartbeat_time_
     last_heartbeat_time_=std::chrono::system_clock::now();
-
+    alive_=true;
 }
 void WorkerInfo::increaseTaskCount(){
     running_task_count_++;
@@ -50,11 +50,7 @@ void WorkerInfo::decreaseTaskCount(){
 }
 bool WorkerInfo::isOverTime(){
     auto now=std::chrono::system_clock::now();
-    if(now-last_heartbeat_time_>std::chrono::seconds(10)){
-        std::cout<<"heartbeat time out!"<<std::endl;
-        return true;
-    }
-    return false;
+    return now-last_heartbeat_time_>std::chrono::seconds(10);
 }
 
 bool WorkerInfo::isAlive() const{
@@ -64,8 +60,6 @@ void WorkerInfo::markDead(){
     alive_=false;
 }
 
-void WorkerInfo::setAlive(bool){
 
-}
 
 }

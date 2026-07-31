@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include<sys/socket.h>
 #include<iostream>
-#include"../../include/network/TCPServer.h"
+#include"network/TCPServer.h"
 namespace dts{
     TCPServer::TCPServer(int port)
     :port_(port),listen_fd_(-1){}

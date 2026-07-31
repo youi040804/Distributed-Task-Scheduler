@@ -5,9 +5,9 @@
 #include <arpa/inet.h> 
 #include <cstring> 
 #include <thread>
-#include"../../include/worker/Worker.h"
-#include"../../include/common/WorkerInfo.h"
-#include"../../include/common/Protocol.h"
+#include"worker/Worker.h"
+#include"common/WorkerInfo.h"
+#include"common/Protocol.h"
 
 
 namespace dts{
@@ -83,22 +83,16 @@ namespace dts{
          running_task_count_--; 
     }
 
-    void Worker::run(){
-        while(running_){
-
+    bool Worker::sendHeartbeat(){
         // 1. 构造心跳消息
         HeartbeatInfo info;
         info.worker_id=worker_id_;
-        //info.running_task_count=running_task_count_;
-        info.running_task_count = 0;  // 暂时写 0
-        
-        //每隔3秒发送一次心跳消息
+        info.running_task_count=running_task_count_.load();
+        //先实现只发送一次心跳消息
         Message msg;
         msg.header.type=MessageType::HEARTBEAT;
         msg.data=Protocol::serializeHeartbeatInfo(info);
-        sendToMaster(msg);
-        std::this_thread::sleep_for(std::chrono::seconds(3));
-        }
+        return sendToMaster(msg);
     }
 
 }

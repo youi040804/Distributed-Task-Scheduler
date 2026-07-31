@@ -4,12 +4,13 @@
  */
 
 #pragma once
-#include"../network/TCPServer.h"
-#include"../common/WorkerInfo.h"
+#include"network/TCPServer.h"
+#include"common/WorkerInfo.h"
 #include "WorkerManager.h"
 
 namespace dts{
 struct WorkerRegisterInfo;
+struct HeartbeatInfo;
 class Master{
 private:
 int port_;
@@ -21,7 +22,7 @@ public:
 Master(int master_port);
 bool start();
 void handleWorkerRegister(const WorkerRegisterInfo&workerinfo);
-
+bool handleHeartbeat(const HeartbeatInfo& info);
 void run();
 
 const WorkerInfo* getWorkerInfo(int workerId) const;

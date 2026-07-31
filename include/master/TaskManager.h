@@ -3,7 +3,7 @@
  */
 #pragma once
 
-#include"../common/Task.h"
+#include"common/Task.h"
 namespace dts{
 class TaskManager{
 

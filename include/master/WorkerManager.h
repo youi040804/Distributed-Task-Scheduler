@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#include"../common/WorkerInfo.h"
+#include"common/WorkerInfo.h"
 #include<unordered_map>
 namespace dts{
 class WorkerManager{
@@ -15,9 +15,9 @@ void addWorker(WorkerInfo&& worker);
 
 const WorkerInfo* getWorkerInfo(int workerId) const;
 
-void updateWorkerHeartBeat(int workerId);
-void updateWorkerTaskCount(int workerId, size_t taskCount);
-void markWorkerDead(int workerId);
+bool updateWorkerHeartbeat(int workerId);
+bool updateWorkerTaskCount(int workerId, size_t taskCount);
+bool markWorkerDead(int workerId);
 
 
 };

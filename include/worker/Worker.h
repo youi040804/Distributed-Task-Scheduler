@@ -7,8 +7,8 @@
 #include<memory>
 #include<string>
 #include <atomic>
-#include"../network/TCPClient.h"
-#include "../common/Message.h"  
+#include"network/TCPClient.h"
+#include "common/Message.h"  
 namespace dts{
 class Worker{
 private:
@@ -30,7 +30,9 @@ public:
 
     void increaseTaskCount();
     void decreaseTaskCount();
-    void run();
+    //暂且用sendHeartbeat()函数实现发送一次心跳消息，先不实现定时循环发送心跳消息
+    bool sendHeartbeat();
+
 
 };
 }

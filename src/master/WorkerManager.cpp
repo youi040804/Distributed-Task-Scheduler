@@ -4,7 +4,7 @@
  */
 #include<utility>
 #include<iostream>
-#include"../../include/master/WorkerManager.h"
+#include"master/WorkerManager.h"
 
 namespace dts
 {
@@ -19,35 +19,33 @@ const WorkerInfo* WorkerManager::getWorkerInfo(int workerId) const {
     }
     return nullptr;
 }
-//std::unordered_map<int,WorkerInfo> workers_;//key:workerId,value:WorkerInfo
-//
-void WorkerManager::updateWorkerHeartBeat(int workerId){
-    auto it=workers_.find(workerId);
-    if (it== workers_.end()) {
-        std::cout<<"worker not exist! Update heartbeat failed!"<<std::endl;
-        return;
+
+bool WorkerManager::updateWorkerHeartbeat(int workerId) {
+    auto it = workers_.find(workerId);
+    if (it == workers_.end()) {
+        return false;
     }
     it->second.updateHeartbeat();
+    return true;
 }
-
-void WorkerManager::updateWorkerTaskCount(int workerId, size_t taskCount){
+bool WorkerManager::updateWorkerTaskCount(int workerId, size_t taskCount){
     auto it=workers_.find(workerId);
     if (it== workers_.end()) {
         std::cout<<"worker not exist! Update task count failed!"<<std::endl;
-        return;
+        return false; 
     }
     it->second.setRunningTaskCount(taskCount);
-
+    return true;
 }
 
-void WorkerManager::markWorkerDead(int workerId){
+bool WorkerManager::markWorkerDead(int workerId){
     auto it=workers_.find(workerId);
     if (it== workers_.end()) {
         std::cout<<"worker not exist!"<<std::endl;
-        return;
+        return false;
     }
-    if(it->second.isOverTime()) it->second.markDead();
-    
+    it->second.markDead();
+    return true;
 }
 
 

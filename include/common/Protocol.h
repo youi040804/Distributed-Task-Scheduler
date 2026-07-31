@@ -14,26 +14,25 @@ data = 业务数据
 namespace dts{
 struct WorkerRegisterInfo
 {
-    int worker_id;
-    std::string ip;
-    int port;
+    int worker_id=0;
+    std::string ip="";
+    int port=0;
 };
 
 struct HeartbeatInfo{
-    int worker_id;
-    int running_task_count;
+    int worker_id=0;
+    size_t running_task_count=0;
 };
 struct TaskAssignInfo{
-    int task_id;
-    std::string payload;
-
+    int task_id=0;
+    std::string payload="";
 };
 //Protocol类
 class Protocol{
 
 public:
     //序列化，将Message转成string（用于发送）
-    static std::string serialize(Message&msg);
+    static std::string serialize(const Message&msg);
     //反序列化：将string转成Message（用于接收）
     static Message deserialize(const std::string&raw);
 

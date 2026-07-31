@@ -6,8 +6,8 @@
 #include<unistd.h>
 #include<stdexcept> // for std::runtime_error
 #include<optional>// for std::nullopt
-#include"../../include/network/Connection.h"
-#include"../../include/common/Protocol.h"
+#include"network/Connection.h"
+#include"common/Protocol.h"
 namespace dts{
 
     Connection::Connection(int fd,sockaddr_in addr)

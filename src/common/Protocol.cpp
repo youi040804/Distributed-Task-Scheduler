@@ -4,13 +4,12 @@
 *即：length|type|data
 *例如："100|REGISTER_WORKER|1|192.168.1.100|8080"
 */
-#include"../../include/common/Protocol.h"
+#include"common/Protocol.h"
 namespace dts{
 
-std::string Protocol::serialize(Message&msg){
-    msg.header.length=msg.data.size();
-    
-    std::string len=std::to_string(msg.header.length);
+std::string Protocol::serialize(const Message&msg){
+    uint32_t length=msg.data.size();
+    std::string len=std::to_string(length);
     std::string type=messageTypeToString(msg.header.type);
     return len+"|"+type+"|"+msg.data;
 

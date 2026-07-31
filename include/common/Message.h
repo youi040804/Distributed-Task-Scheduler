@@ -22,13 +22,13 @@ enum class MessageType:uint16_t
     UNKNOWN=0
 };
 struct MessageHeader{
-    uint32_t length;//body长度,length=data.size()
-    MessageType type; 
+    uint32_t length = 0;        //body长度,length=data.size(),默认值为0
+    MessageType type = MessageType::UNKNOWN;
 };
 
 struct Message{
-MessageHeader header;
-std::string data;
-
+    MessageHeader header{};
+    std::string data="";
 };
+
 }

@@ -3,7 +3,7 @@
  * TCP 服务器测试
  */
 
-#include "../../include/network/TCPServer.h"
+#include "network/TCPServer.h"
 #include <iostream>
 #include <unistd.h>
 

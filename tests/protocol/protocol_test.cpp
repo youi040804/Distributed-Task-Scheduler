@@ -6,7 +6,7 @@
 
 #include <iostream>
 #include <cassert>
-#include "../../include/common/Protocol.h"
+#include "common/Protocol.h"
 
 using namespace dts;
 

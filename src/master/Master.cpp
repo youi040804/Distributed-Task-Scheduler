@@ -3,8 +3,9 @@
  * Master 类的实现，包含主循环、消息分发和 Worker 注册处理
  */
 #include<iostream>
-#include"../../include/master/Master.h"
-#include"../../include/common/Protocol.h"
+#include"master/Master.h"
+#include "common/Protocol.h"  
+
 namespace dts{
 
 Master::Master(int master_port):port_(master_port), running_(false){
@@ -35,40 +36,45 @@ void Master::handleWorkerRegister(const WorkerRegisterInfo&RegisterInfo){
 
 }
 
-void Master::run(){
+bool Master::handleHeartbeat(const HeartbeatInfo& info) {
+    if (!worker_manager_.updateWorkerHeartbeat(info.worker_id)) {
+        return false;
+    }
+    return worker_manager_.updateWorkerTaskCount(info.worker_id, info.running_task_count);
+}
 
-    while(running_){
-        auto conn=master_server_->acceptConnection();
+void Master::run() {
+    while (running_) {
+        auto conn = master_server_->acceptConnection();
 
-        if(conn){
-            Message msg=conn->receiveMessage();
-            switch (msg.header.type){
-            //  case dts::MessageType::SUBMIT_TASK:
+        if (!conn) {
+            continue;
+        }
 
-                case dts::MessageType::REGISTER_WORKER:{
-                    WorkerRegisterInfo workerinfo=Protocol::deserializeWorkerInfo(msg.data);
+        while (running_) {
+            Message msg = conn->receiveMessage();
+            if (msg.header.type == MessageType::UNKNOWN && msg.data.empty()) {
+                break;
+            }
+
+            switch (msg.header.type) {
+                case MessageType::REGISTER_WORKER: {
+                    WorkerRegisterInfo workerinfo = Protocol::deserializeWorkerInfo(msg.data);
                     handleWorkerRegister(workerinfo);
                     break;
                 }
-            // case dts::MessageType::TASK_RESULT:{}
-
-                case dts::MessageType::HEARTBEAT:{
-                    HeartbeatInfo info=Protocol::deserializeHeartbeatInfo(msg.data);
-                    worker_manager_.updateWorkerHeartBeat(info.worker_id);
-                    worker_manager_.updateWorkerTaskCount(info.worker_id,info.running_task_count);
+                case MessageType::HEARTBEAT: {
+                    HeartbeatInfo info = Protocol::deserializeHeartbeatInfo(msg.data);
+                    handleHeartbeat(info);
                     break;
                 }
-
-                default:{
-                    std::cerr<<"Unknown message type"<<std::endl;
+                default: {
                     break;
                 }
             }
         }
-
     }
 }
-
 const WorkerInfo* Master::getWorkerInfo(int workerId) const {
     return worker_manager_.getWorkerInfo(workerId);
 }

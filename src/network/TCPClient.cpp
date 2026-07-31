@@ -4,7 +4,7 @@
  */
 #include <arpa/inet.h> //for inet_addr()
 #include <unistd.h>//for close()
-#include"../../include/network/TCPClient.h"
+#include"network/TCPClient.h"
 
 namespace dts{
         TCPClient::TCPClient(std::string ip,int port)

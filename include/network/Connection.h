@@ -6,7 +6,7 @@
 
 #include <netinet/in.h>
 #include<string>
-#include "../common/Message.h"
+#include "common/Message.h"
 
 namespace dts{
 class Connection{

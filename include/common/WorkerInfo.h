@@ -30,7 +30,6 @@ public:
     bool isOverTime();
     bool isAlive() const;
     void markDead();
-    void setAlive(bool);
 
 };
 
