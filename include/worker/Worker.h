@@ -9,7 +9,9 @@
 #include <atomic>
 #include"network/TCPClient.h"
 #include "common/Message.h"  
+#include "utils/Config.h"
 namespace dts{
+
 class Worker{
 private:
     int worker_id_;
@@ -19,6 +21,7 @@ private:
     bool sendToMaster(Message& msg); 
 
     std::atomic<size_t> running_task_count_; 
+
 
 public:
     explicit Worker(int worker_id);

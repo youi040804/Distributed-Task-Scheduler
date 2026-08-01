@@ -3,6 +3,7 @@
  * Master 类的实现，包含主循环、消息分发和 Worker 注册处理
  */
 #include<iostream>
+#include<chrono>
 #include"master/Master.h"
 #include "common/Protocol.h"  
 
@@ -19,7 +20,11 @@ bool Master::start(){
         perror("master start failed");
         return false;
     }
+
     running_=true;
+
+    //创建心跳检测线程
+    heartbeat_thread_=std::thread(&Master::heartbeatLoop,this);
     return true;
 }
 
@@ -43,6 +48,21 @@ bool Master::handleHeartbeat(const HeartbeatInfo& info) {
     return worker_manager_.updateWorkerTaskCount(info.worker_id, info.running_task_count);
 }
 
+
+
+const WorkerInfo* Master::getWorkerInfo(int workerId) const {
+    return worker_manager_.getWorkerInfo(workerId);
+}
+void Master::heartbeatLoop(){
+    while(running_){
+        std::this_thread::sleep_for(std::chrono::seconds(3));
+
+        auto timeoutList=worker_manager_.getTimeoutWorker();
+        for(int id:timeoutList){//timeoutList stores workerID
+            worker_manager_.markWorkerDead(id);
+        }
+    }
+}
 void Master::run() {
     while (running_) {
         auto conn = master_server_->acceptConnection();
@@ -75,8 +95,11 @@ void Master::run() {
         }
     }
 }
-const WorkerInfo* Master::getWorkerInfo(int workerId) const {
-    return worker_manager_.getWorkerInfo(workerId);
-}
 
+
+void Master::stop(){
+    running_=false;
+    heartbeat_thread_.join();
+
+}
 }

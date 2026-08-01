@@ -6,8 +6,11 @@
 
 #include<string>
 #include<chrono>
+#include"utils/Config.h"
 namespace dts{
+
 class WorkerInfo{
+    
 private:
     int worker_id_;
     std::string worker_ip_;
@@ -15,6 +18,7 @@ private:
     size_t running_task_count_;
     std::chrono::system_clock::time_point  last_heartbeat_time_;//只记录最后一次Heartbeat
     bool alive_;
+
 public:
     WorkerInfo(int workerId,const std::string& workerIp,int workerPort);
     int getWorkerId()const;
@@ -27,7 +31,7 @@ public:
     void updateHeartbeat();
     void increaseTaskCount();
     void decreaseTaskCount();
-    bool isOverTime();
+    bool isOverTime(int timeoutSeconds)const ;
     bool isAlive() const;
     void markDead();
 

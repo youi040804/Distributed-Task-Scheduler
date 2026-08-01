@@ -38,6 +38,16 @@ bool WorkerManager::updateWorkerTaskCount(int workerId, size_t taskCount){
     return true;
 }
 
+//获取超时的worker
+std::vector<int> WorkerManager::getTimeoutWorker(){
+    std::vector<int>timeoutList;
+    for(auto worker:workers_){
+        if(worker.second.isOverTime(HEARTBEAT_TIMEOUT))
+        timeoutList.push_back(worker.first);//push back workerID into timeoutList
+    }
+    return timeoutList;
+}
+
 bool WorkerManager::markWorkerDead(int workerId){
     auto it=workers_.find(workerId);
     if (it== workers_.end()) {

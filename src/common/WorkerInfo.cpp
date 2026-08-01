@@ -48,9 +48,9 @@ void WorkerInfo::decreaseTaskCount(){
         running_task_count_--;
     }
 }
-bool WorkerInfo::isOverTime(){
+bool WorkerInfo::isOverTime(int timeoutSeconds)const {
     auto now=std::chrono::system_clock::now();
-    return now-last_heartbeat_time_>std::chrono::seconds(10);
+    return now-last_heartbeat_time_>std::chrono::seconds(timeoutSeconds);
 }
 
 bool WorkerInfo::isAlive() const{

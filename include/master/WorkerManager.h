@@ -6,8 +6,10 @@
 
 #include"common/WorkerInfo.h"
 #include<unordered_map>
+#include<vector>
 namespace dts{
 class WorkerManager{
+
 private:
 std::unordered_map<int,WorkerInfo> workers_;//key:workerId,value:WorkerInfo
 public:
@@ -17,6 +19,9 @@ const WorkerInfo* getWorkerInfo(int workerId) const;
 
 bool updateWorkerHeartbeat(int workerId);
 bool updateWorkerTaskCount(int workerId, size_t taskCount);
+
+//获取超时的worker
+std::vector<int> getTimeoutWorker();
 bool markWorkerDead(int workerId);
 
 
