@@ -9,18 +9,30 @@
 namespace dts
 {
 void WorkerManager::addWorker(WorkerInfo&&worker){
+    std::lock_guard<std::mutex> lock(mutex_);
     workers_.emplace(worker.getWorkerId(),std::move(worker));
 }
+bool WorkerManager::hasWorker(int workerId)const {
+    std::lock_guard<std::mutex>lock(mutex_);
+    auto it = workers_.find(workerId);
+    if (it!= workers_.end()) {
+        return true;
+    }
+    return false;
+}
 // WorkerManager.h
-const WorkerInfo* WorkerManager::getWorkerInfo(int workerId) const {
+std::optional<WorkerInfo> WorkerManager::getWorkerInfo(int workerId) const {
+
+    std::lock_guard<std::mutex> lock(mutex_);
     auto it = workers_.find(workerId);
     if (it != workers_.end()) {
-        return &it->second;
+        return it->second;
     }
-    return nullptr;
+     return std::nullopt;;
 }
 
 bool WorkerManager::updateWorkerHeartbeat(int workerId) {
+    std::lock_guard<std::mutex>lock(mutex_);
     auto it = workers_.find(workerId);
     if (it == workers_.end()) {
         return false;
@@ -29,6 +41,8 @@ bool WorkerManager::updateWorkerHeartbeat(int workerId) {
     return true;
 }
 bool WorkerManager::updateWorkerTaskCount(int workerId, size_t taskCount){
+    std::lock_guard<std::mutex>lock(mutex_);
+    
     auto it=workers_.find(workerId);
     if (it== workers_.end()) {
         std::cout<<"worker not exist! Update task count failed!"<<std::endl;
@@ -41,7 +55,10 @@ bool WorkerManager::updateWorkerTaskCount(int workerId, size_t taskCount){
 //获取超时的worker
 std::vector<int> WorkerManager::getTimeoutWorker(){
     std::vector<int>timeoutList;
-    for(auto worker:workers_){
+
+    std::lock_guard<std::mutex>lock(mutex_);
+
+    for(const auto& worker:workers_){
         if(worker.second.isOverTime(HEARTBEAT_TIMEOUT))
         timeoutList.push_back(worker.first);//push back workerID into timeoutList
     }
@@ -49,6 +66,7 @@ std::vector<int> WorkerManager::getTimeoutWorker(){
 }
 
 bool WorkerManager::markWorkerDead(int workerId){
+    std::lock_guard<std::mutex> lock(mutex_);
     auto it=workers_.find(workerId);
     if (it== workers_.end()) {
         std::cout<<"worker not exist!"<<std::endl;

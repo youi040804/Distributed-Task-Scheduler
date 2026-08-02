@@ -5,7 +5,7 @@
 #include<iostream>
 #include<chrono>
 #include"master/Master.h"
-#include "common/Protocol.h"  
+#include "common/Protocol.h"
 
 namespace dts{
 
@@ -29,7 +29,7 @@ bool Master::start(){
 }
 
 void Master::handleWorkerRegister(const WorkerRegisterInfo&RegisterInfo){
-    if(worker_manager_.getWorkerInfo(RegisterInfo.worker_id)!=nullptr) 
+    if(worker_manager_.hasWorker(RegisterInfo.worker_id))
     {
         std::cout<<"worker already exists!"<<std::endl;
         return ;//如果worker存在直接返回
@@ -50,15 +50,11 @@ bool Master::handleHeartbeat(const HeartbeatInfo& info) {
 
 
 
-const WorkerInfo* Master::getWorkerInfo(int workerId) const {
-    return worker_manager_.getWorkerInfo(workerId);
-}
-void Master::heartbeatLoop(){
-    while(running_){
-        std::this_thread::sleep_for(std::chrono::seconds(3));
-
-        auto timeoutList=worker_manager_.getTimeoutWorker();
-        for(int id:timeoutList){//timeoutList stores workerID
+void Master::heartbeatLoop() {
+    while (running_) {
+        std::this_thread::sleep_for(std::chrono::seconds(HEARTBEAT_CHECK_INTERVAL));
+        auto timeoutList = worker_manager_.getTimeoutWorker();
+        for (int id : timeoutList) {
             worker_manager_.markWorkerDead(id);
         }
     }
@@ -99,7 +95,15 @@ void Master::run() {
 
 void Master::stop(){
     running_=false;
-    heartbeat_thread_.join();
+    if(heartbeat_thread_.joinable()){
+        heartbeat_thread_.join();
+
+    }
 
 }
+
+Master::~Master() {
+    stop();
+}
+
 }

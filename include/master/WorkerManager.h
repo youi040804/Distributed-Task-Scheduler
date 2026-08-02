@@ -7,15 +7,21 @@
 #include"common/WorkerInfo.h"
 #include<unordered_map>
 #include<vector>
+#include<mutex>
+#include<optional>
 namespace dts{
 class WorkerManager{
 
 private:
 std::unordered_map<int,WorkerInfo> workers_;//key:workerId,value:WorkerInfo
+mutable std::mutex mutex_;
+
 public:
 void addWorker(WorkerInfo&& worker);
 
-const WorkerInfo* getWorkerInfo(int workerId) const;
+bool hasWorker(int workerId)const;
+
+std::optional<WorkerInfo> getWorkerInfo(int workerId) const;
 
 bool updateWorkerHeartbeat(int workerId);
 bool updateWorkerTaskCount(int workerId, size_t taskCount);

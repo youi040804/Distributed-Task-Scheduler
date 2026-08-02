@@ -5,9 +5,12 @@
 
 #pragma once
 #include<thread>
+#include<atomic>
 #include"network/TCPServer.h"
 #include"common/WorkerInfo.h"
 #include "WorkerManager.h"
+#include "utils/Config.h"
+
 namespace dts{
 struct WorkerRegisterInfo;
 struct HeartbeatInfo;
@@ -16,7 +19,7 @@ struct HeartbeatInfo;
 class Master{
 private:
 int port_;
-bool running_;
+std::atomic<bool> running_;
 std::shared_ptr<TCPServer>master_server_;
 
 std::thread heartbeat_thread_;
@@ -27,14 +30,20 @@ WorkerManager worker_manager_;
 
 public:
 Master(int master_port);
+~Master();
 bool start();
 void handleWorkerRegister(const WorkerRegisterInfo&workerinfo);
 bool handleHeartbeat(const HeartbeatInfo& info);
 
+
+
+// 转发给 WorkerManager（内联实现）
+std::optional<WorkerInfo> getWorkerInfo(int workerId) const {
+    return worker_manager_.getWorkerInfo(workerId);
+}
 void run();
 void stop();
 
-const WorkerInfo* getWorkerInfo(int workerId) const;
 };
 
 }
