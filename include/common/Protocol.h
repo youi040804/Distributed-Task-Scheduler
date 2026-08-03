@@ -11,6 +11,7 @@ data = 业务数据
 #include <sstream>//for ostringstream
 #include<vector>
 #include"Message.h"
+#include"Task.h"
 namespace dts{
 struct WorkerRegisterInfo
 {
@@ -23,8 +24,18 @@ struct HeartbeatInfo{
     int worker_id=0;
     size_t running_task_count=0;
 };
+struct TaskSubmitInfo{
+    int priority=0;
+    std::string payload="";
+};
 struct TaskAssignInfo{
     int task_id=0;
+    std::string payload="";
+};
+
+struct TaskResultInfo{
+    int task_id=0;
+    TaskStatus status=TaskStatus::FAILED;
     std::string payload="";
 };
 //Protocol类
@@ -44,6 +55,17 @@ public:
     static std::string serializeHeartbeatInfo(const HeartbeatInfo&info);
     static HeartbeatInfo deserializeHeartbeatInfo(const std::string&data);
     
+    //辅助函数：TaskSubmitInfo--string
+    static std::string serializeTaskSubmitInfo(const TaskSubmitInfo&info);
+    static TaskSubmitInfo deserializeTaskSubmitInfo(const std::string&data);
+
+    //辅助函数：TaskAssignInfo--string
+    static std::string serializeTaskAssignInfo(const TaskAssignInfo&info);
+    static TaskAssignInfo deserializeTaskAssignInfo(const std::string&data);
+
+    //辅助函数：TaskResultInfo--string
+    static std::string serializeTaskResultInfo(const TaskResultInfo&info);
+    static TaskResultInfo deserializeTaskResultInfo(const std::string&data);
 
     //辅助函数：将枚举类转为字符串
     static std::string messageTypeToString(MessageType type) ;

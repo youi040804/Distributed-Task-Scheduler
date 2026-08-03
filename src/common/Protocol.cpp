@@ -62,7 +62,55 @@ HeartbeatInfo Protocol::deserializeHeartbeatInfo(const std::string&data){
     return heartbeatinfo;
 }
     
-    //辅助函数：将枚举类转为字符串
+//辅助函数：TaskSubmitInfo--string
+std::string Protocol::serializeTaskSubmitInfo(const TaskSubmitInfo&info){
+    MessageBuilder builder;
+    builder<<info.priority<<info.payload;
+    return builder.str();
+}
+TaskSubmitInfo Protocol::deserializeTaskSubmitInfo(const std::string&data){
+    MessageParser parser(data);
+    TaskSubmitInfo task_submit_info;
+    parser>>task_submit_info.priority;
+    parser>>task_submit_info.payload;
+    return task_submit_info;
+}
+
+//辅助函数：TaskAssignInfo--string
+std::string Protocol::serializeTaskAssignInfo(const TaskAssignInfo&info){
+    MessageBuilder builder;
+    builder<<info.task_id<<info.payload;
+    return builder.str();
+}
+TaskAssignInfo Protocol::deserializeTaskAssignInfo(const std::string&data){
+    MessageParser parser(data);
+    TaskAssignInfo task_assign_info;
+    parser>>task_assign_info.task_id;
+    parser>>task_assign_info.payload;
+    return task_assign_info;
+}
+
+//辅助函数：TaskResultInfo--string
+std::string Protocol::serializeTaskResultInfo(const TaskResultInfo&info){
+    MessageBuilder builder;
+    builder<<info.task_id<< static_cast<int>(info.status)<<info.payload;
+    return builder.str();
+}
+TaskResultInfo Protocol::deserializeTaskResultInfo(const std::string&data){
+    MessageParser parser(data);
+    int status;
+
+    TaskResultInfo task_result_info;
+    parser>>task_result_info.task_id;
+    
+    parser >> status;
+    task_result_info.status=static_cast<TaskStatus>(status);
+    
+    parser>>task_result_info.payload;
+    return task_result_info;
+}
+
+//辅助函数：将枚举类转为字符串
 std::string Protocol::messageTypeToString(MessageType type){
     switch(type){
         case dts::MessageType::SUBMIT_TASK:
@@ -96,6 +144,7 @@ MessageType Protocol::stringToMessageType(const std::string&type){
         return MessageType::UNKNOWN;  
     }
 }
+
 
 };
 

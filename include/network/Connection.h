@@ -17,7 +17,6 @@ public:
 
     explicit Connection(int fd ,sockaddr_in addr);
     //bool send(const std::string &data);
-    //将原来发送临时字符串修改为真正的Message格式
     bool sendMessage(Message&msg);
     //底层send()
     bool send(const std::string&data,uint32_t total_len);
