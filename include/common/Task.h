@@ -5,7 +5,7 @@
 
 #pragma once
 #include<string>
-
+#include<memory>
 namespace dts{
 enum class TaskStatus
 {
@@ -37,6 +37,8 @@ public:
     
     void increaseRetryCount();
     int getRetryCount() const;
+
+
 
 };
 

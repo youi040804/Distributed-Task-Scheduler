@@ -10,6 +10,8 @@
 #include"common/WorkerInfo.h"
 #include "WorkerManager.h"
 #include "utils/Config.h"
+#include"common/Protocol.h"
+#include"master/TaskManager.h"
 
 namespace dts{
 struct WorkerRegisterInfo;
@@ -26,6 +28,9 @@ std::thread heartbeat_thread_;
 void heartbeatLoop();
 
 WorkerManager worker_manager_;
+TaskManager task_manager_;
+
+std::atomic<int>next_id_{1};//Task ID生成器
 
 
 public:
@@ -35,12 +40,13 @@ bool start();
 void handleWorkerRegister(const WorkerRegisterInfo&workerinfo);
 bool handleHeartbeat(const HeartbeatInfo& info);
 
-
+void handleTaskSubmit(const TaskSubmitInfo&info);
 
 // 转发给 WorkerManager（内联实现）
 std::optional<WorkerInfo> getWorkerInfo(int workerId) const {
     return worker_manager_.getWorkerInfo(workerId);
 }
+
 void run();
 void stop();
 

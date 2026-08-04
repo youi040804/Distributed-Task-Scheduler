@@ -5,7 +5,6 @@
 #include<iostream>
 #include<chrono>
 #include"master/Master.h"
-#include "common/Protocol.h"
 
 namespace dts{
 
@@ -59,6 +58,17 @@ void Master::heartbeatLoop() {
         }
     }
 }
+
+void Master::handleTaskSubmit(const TaskSubmitInfo&info){
+        //1.创建Task
+        int id=next_id_.fetch_add(1);//原子递增
+        Task task(id,info.priority,info.payload);
+        //2.将Task保存到taskmanager里
+        task_manager_.addTask(std::move(task));
+}
+
+
+
 void Master::run() {
     while (running_) {
         auto conn = master_server_->acceptConnection();
@@ -82,6 +92,11 @@ void Master::run() {
                 case MessageType::HEARTBEAT: {
                     HeartbeatInfo info = Protocol::deserializeHeartbeatInfo(msg.data);
                     handleHeartbeat(info);
+                    break;
+                }
+                case MessageType::SUBMIT_TASK: {
+                    TaskSubmitInfo info = Protocol::deserializeTaskSubmitInfo(msg.data);
+                    handleTaskSubmit(info);
                     break;
                 }
                 default: {

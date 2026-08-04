@@ -14,7 +14,7 @@ class WorkerManager{
 
 private:
 std::unordered_map<int,WorkerInfo> workers_;//key:workerId,value:WorkerInfo
-mutable std::mutex mutex_;
+mutable std::mutex worker_mutex_;
 
 public:
 void addWorker(WorkerInfo&& worker);

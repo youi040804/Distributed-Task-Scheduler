@@ -9,11 +9,11 @@
 namespace dts
 {
 void WorkerManager::addWorker(WorkerInfo&&worker){
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::mutex> lock(worker_mutex_);
     workers_.emplace(worker.getWorkerId(),std::move(worker));
 }
 bool WorkerManager::hasWorker(int workerId)const {
-    std::lock_guard<std::mutex>lock(mutex_);
+    std::lock_guard<std::mutex>lock(worker_mutex_);
     auto it = workers_.find(workerId);
     if (it!= workers_.end()) {
         return true;
@@ -23,7 +23,7 @@ bool WorkerManager::hasWorker(int workerId)const {
 // WorkerManager.h
 std::optional<WorkerInfo> WorkerManager::getWorkerInfo(int workerId) const {
 
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::mutex> lock(worker_mutex_);
     auto it = workers_.find(workerId);
     if (it != workers_.end()) {
         return it->second;
@@ -32,7 +32,7 @@ std::optional<WorkerInfo> WorkerManager::getWorkerInfo(int workerId) const {
 }
 
 bool WorkerManager::updateWorkerHeartbeat(int workerId) {
-    std::lock_guard<std::mutex>lock(mutex_);
+    std::lock_guard<std::mutex>lock(worker_mutex_);
     auto it = workers_.find(workerId);
     if (it == workers_.end()) {
         return false;
@@ -41,7 +41,7 @@ bool WorkerManager::updateWorkerHeartbeat(int workerId) {
     return true;
 }
 bool WorkerManager::updateWorkerTaskCount(int workerId, size_t taskCount){
-    std::lock_guard<std::mutex>lock(mutex_);
+    std::lock_guard<std::mutex>lock(worker_mutex_);
     
     auto it=workers_.find(workerId);
     if (it== workers_.end()) {
@@ -56,7 +56,7 @@ bool WorkerManager::updateWorkerTaskCount(int workerId, size_t taskCount){
 std::vector<int> WorkerManager::getTimeoutWorker(){
     std::vector<int>timeoutList;
 
-    std::lock_guard<std::mutex>lock(mutex_);
+    std::lock_guard<std::mutex>lock(worker_mutex_);
 
     for(const auto& worker:workers_){
         if(worker.second.isOverTime(HEARTBEAT_TIMEOUT))
@@ -66,7 +66,7 @@ std::vector<int> WorkerManager::getTimeoutWorker(){
 }
 
 bool WorkerManager::markWorkerDead(int workerId){
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::mutex> lock(worker_mutex_);
     auto it=workers_.find(workerId);
     if (it== workers_.end()) {
         std::cout<<"worker not exist!"<<std::endl;
