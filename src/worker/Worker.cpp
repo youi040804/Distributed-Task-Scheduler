@@ -75,10 +75,10 @@ namespace dts{
     }
 
 
-    void Worker::increaseTaskCount() { 
+    void Worker::incrementRunningTasks() { 
         running_task_count_++; 
     }
-    void Worker::decreaseTaskCount() {
+    void Worker::decrementRunningTasks() {
          if (running_task_count_ > 0) 
          running_task_count_--; 
     }

@@ -40,10 +40,10 @@ void WorkerInfo::updateHeartbeat(){
     last_heartbeat_time_=std::chrono::system_clock::now();
     alive_=true;
 }
-void WorkerInfo::increaseTaskCount(){
+void WorkerInfo::incrementLoad(){
     running_task_count_++;
 }
-void WorkerInfo::decreaseTaskCount(){
+void WorkerInfo::decrementLoad(){
     if (running_task_count_ > 0) {
         running_task_count_--;
     }

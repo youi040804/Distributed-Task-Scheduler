@@ -6,7 +6,7 @@
 
 #include"common/WorkerInfo.h"
 #include<unordered_map>
-#include<vector>
+#include <utility>  
 #include<mutex>
 #include<optional>
 namespace dts{
@@ -18,8 +18,7 @@ mutable std::mutex worker_mutex_;
 
 public:
 void addWorker(WorkerInfo&& worker);
-
-bool hasWorker(int workerId)const;
+bool  hasWorker(int workerId)const;
 
 std::optional<WorkerInfo> getWorkerInfo(int workerId) const;
 
@@ -29,7 +28,8 @@ bool updateWorkerTaskCount(int workerId, size_t taskCount);
 //获取超时的worker
 std::vector<int> getTimeoutWorker();
 bool markWorkerDead(int workerId);
-
+bool increaseWorkerTaskCount(int workerId);
+std::pair<int,size_t> pickLeastLoadedWorker();
 
 };
 

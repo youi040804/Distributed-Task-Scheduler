@@ -21,14 +21,17 @@ bool Master::start(){
     }
 
     running_=true;
-
+    scheduler_=std::make_unique<Scheduler>(&task_manager_,&worker_manager_);
     //创建心跳检测线程
     heartbeat_thread_=std::thread(&Master::heartbeatLoop,this);
+    //创建任务调度线程
+    scheduler_thread_=std::thread(&Master::schedulerLoop,this);
     return true;
+
 }
 
 void Master::handleWorkerRegister(const WorkerRegisterInfo&RegisterInfo){
-    if(worker_manager_.hasWorker(RegisterInfo.worker_id))
+    if(worker_manager_. hasWorker(RegisterInfo.worker_id))
     {
         std::cout<<"worker already exists!"<<std::endl;
         return ;//如果worker存在直接返回
@@ -46,8 +49,6 @@ bool Master::handleHeartbeat(const HeartbeatInfo& info) {
     }
     return worker_manager_.updateWorkerTaskCount(info.worker_id, info.running_task_count);
 }
-
-
 
 void Master::heartbeatLoop() {
     while (running_) {
@@ -67,6 +68,13 @@ void Master::handleTaskSubmit(const TaskSubmitInfo&info){
         task_manager_.addTask(std::move(task));
 }
 
+void Master::schedulerLoop(){
+
+    while(running_){
+        scheduler_->schedulerOnce();
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+}
 
 
 void Master::run() {

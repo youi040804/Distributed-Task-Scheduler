@@ -1,7 +1,7 @@
 /*
 *TaskManager.cpp
 */
-
+#include<iostream>
 #include"master/TaskManager.h"
 namespace dts{
 
@@ -12,6 +12,14 @@ namespace dts{
 
         tasks_.emplace(taskPtr->getTaskId(),taskPtr);
         readyQueue_.push(taskPtr);
+    }
+
+    void TaskManager::pushBackTask(std::shared_ptr<Task>task){
+        std::lock_guard<std::mutex>lock(task_mutex_);
+        if(task){
+            task->setStatus(TaskStatus::PENDING);// 状态改回 PENDING
+            readyQueue_.push(task);
+        }
     }
 
     std::optional<std::shared_ptr<Task>> TaskManager::getTask(int task_id)const{
@@ -40,13 +48,19 @@ namespace dts{
         // return false;
     }
 
+    bool TaskManager::hasPendingTask(){
+        std::lock_guard<std::mutex>lock(task_mutex_);
+        if(readyQueue_.empty()){
+            return false;
+        }else return true;
+    }
 
     //找到priority最大的task，每次拿最高优先级任务
     std::shared_ptr<Task> TaskManager::getHighestPriorityTask(){
         std::lock_guard<std::mutex>lock(task_mutex_);
-        if(readyQueue_.empty()){
-            return nullptr;
-        }
+
+        if(readyQueue_.empty())
+        return nullptr;
         auto taskPtr=readyQueue_.top();
         readyQueue_.pop();
         taskPtr->setStatus(TaskStatus::RUNNING);

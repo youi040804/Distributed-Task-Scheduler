@@ -31,8 +31,8 @@ public:
     bool start(const std::string& master_ip, int master_port,
             const std::string& worker_ip, int worker_port); 
 
-    void increaseTaskCount();
-    void decreaseTaskCount();
+    void incrementRunningTasks();
+    void decrementRunningTasks();
     //暂且用sendHeartbeat()函数实现发送一次心跳消息，先不实现定时循环发送心跳消息
     bool sendHeartbeat();
 

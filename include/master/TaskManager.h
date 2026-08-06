@@ -29,9 +29,12 @@ mutable std::mutex task_mutex_;
 
 public:
 void addTask(Task task);
+//新增“把任务放回队列”的方法
+void pushBackTask(std::shared_ptr<Task>task);
 std::optional<std::shared_ptr<Task>> getTask(int task_id)const;
 bool updateTaskStatus(int task_id,TaskStatus status);
 bool removeTask(int task_id);
+bool hasPendingTask();
 
 template<typename Func>
 void forEachTask(Func&&func)const{
@@ -43,7 +46,6 @@ void forEachTask(Func&&func)const{
 }
 
 std::shared_ptr<Task> getHighestPriorityTask();//找到priority最大的task，每次拿最高优先级任务
-
 };
 
 
