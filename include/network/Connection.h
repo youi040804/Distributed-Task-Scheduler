@@ -16,14 +16,12 @@ private:
 public:
 
     explicit Connection(int fd ,sockaddr_in addr);
-    //bool send(const std::string &data);
+
     bool sendMessage(Message&msg);
-    //底层send()
-    bool send(const std::string&data,uint32_t total_len);
+    bool send(const std::string&data,uint32_t total_len);//底层send()
 
     Message receiveMessage();
-    //底层recv
-    std::string recv();
+    std::string recv();//底层recv
 
     void disconnect();
     int fd()const;

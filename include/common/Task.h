@@ -9,10 +9,10 @@
 namespace dts{
 enum class TaskStatus
 {
-PENDING=0,
-RUNNING=1,
-FAILED=2,
-DONE=3
+    PENDING=0,
+    RUNNING=1,
+    FAILED=2,
+    DONE=3
 };
 
 class Task{
@@ -37,9 +37,6 @@ public:
     
     void increaseRetryCount();
     int getRetryCount() const;
-
-
-
 };
 
 }

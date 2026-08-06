@@ -15,7 +15,6 @@ private:
     std::unique_ptr<Connection> connection_;
 
 public:
-
     explicit TCPClient(std::string ip,int port);
     bool connect();
     Connection* getConnection();

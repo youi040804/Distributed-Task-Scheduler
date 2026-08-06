@@ -6,19 +6,20 @@
 
  namespace dts{
 
-    Task::Task(int id ,int priority,const std::string& payload)
-    :task_id_(id),
-    task_priority_(priority),
-    task_status_(TaskStatus::PENDING),
-    task_payload_(payload),
-    retry_count_(0),
-    assigned_worker_(-1)
+    Task::Task(int id, int priority, const std::string& payload)
+        : task_id_(id)
+        , task_priority_(priority)
+        , task_status_(TaskStatus::PENDING)
+        , task_payload_(payload)
+        , retry_count_(0)
+        , assigned_worker_(-1)
     {
-
     }
+
     int Task::getTaskId() const{
         return task_id_;
     }
+
     TaskStatus Task::getTaskStatus() const{
         return task_status_;
     }
@@ -32,6 +33,7 @@
     int Task::getTaskPriority() const{
         return task_priority_;
     }
+    
     int Task::getAssignedWorker() const{
         return assigned_worker_;
     }
@@ -45,7 +47,5 @@
     void Task::increaseRetryCount(){
         retry_count_++;
     }
-
-
 
  }

@@ -7,8 +7,13 @@
 #include<iostream>
 #include"network/TCPServer.h"
 namespace dts{
+
     TCPServer::TCPServer(int port)
-    :port_(port),listen_fd_(-1){}
+        : port_(port),
+        listen_fd_(-1)
+    {
+    }
+
     bool TCPServer::start(){
         int listen_fd=socket(AF_INET,SOCK_STREAM,0);
         if(listen_fd<0){
@@ -26,6 +31,7 @@ namespace dts{
             close(listen_fd);
             return false;
         }// 绑定自己的地址
+
         if(listen(listen_fd,10)<0){
             perror("Server listen");
             close(listen_fd);
@@ -36,6 +42,7 @@ namespace dts{
          std::cout << "Server started on port " << port_ << std::endl;
         return true;//全部成功才返回true
     }
+
     std::shared_ptr<Connection> TCPServer::acceptConnection(){
         sockaddr_in client_addr={};
         socklen_t addrlen=sizeof(client_addr);
@@ -49,11 +56,9 @@ namespace dts{
     }
 
     void TCPServer::stop(){
-        
         for(auto& pair:connections_){
             pair.second->disconnect();
         }
-
         if(listen_fd_>=0){
             close(listen_fd_);
             listen_fd_=-1;//标记为无效，防止重复关闭

@@ -6,7 +6,6 @@
 namespace dts{
 
     void TaskManager::addTask(Task task){
-        
         std::lock_guard<std::mutex>lock(task_mutex_);
         auto taskPtr=std::make_shared<Task>(std::move(task));
 

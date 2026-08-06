@@ -8,13 +8,12 @@
 namespace dts{
 class Scheduler{
 private:
-TaskManager*task_manager_;
-WorkerManager*worker_manager_;
+    TaskManager*task_manager_;
+    WorkerManager*worker_manager_;
 
 public:
-Scheduler(TaskManager*tm,WorkerManager*wm);
-bool schedulerOnce();
-
+    Scheduler(TaskManager*tm,WorkerManager*wm);
+    bool schedulerOnce();
 
 };
 

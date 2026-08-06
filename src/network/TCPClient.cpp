@@ -7,10 +7,16 @@
 #include"network/TCPClient.h"
 
 namespace dts{
-        TCPClient::TCPClient(std::string ip,int port)
-        :ip_(ip),port_(port){}
+
+        TCPClient::TCPClient(std::string ip, int port)
+            : ip_(ip),
+            port_(port)
+        {
+        }
+        
         bool TCPClient::connect(){
             int client_fd=socket(AF_INET,SOCK_STREAM,0);
+
             if(client_fd<0){
                 perror("Client socket");
                 return false;
@@ -20,6 +26,7 @@ namespace dts{
 
             //TCPClient要使用自己的 ip_ 和 port_
             server_addr.sin_port=htons(port_);
+
             //现代推荐inet_pton(),inet_pton 把结果写入第三个参数
             if (inet_pton(AF_INET, ip_.c_str(), &server_addr.sin_addr) != 1) {
                 perror("Invalid IP address");

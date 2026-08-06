@@ -12,14 +12,17 @@
 
 namespace dts{
 
-    Worker::Worker(int worker_id):worker_id_(worker_id),worker_client_(nullptr){
-        memset(&master_addr_,0,sizeof(master_addr_));
-        master_addr_.sin_family=AF_INET;
-
+    Worker::Worker(int worker_id)
+        : worker_id_(worker_id),
+        worker_client_(nullptr)
+    {
+        memset(&master_addr_, 0, sizeof(master_addr_));
+        master_addr_.sin_family = AF_INET;
     }
-
+    
     void Worker::setMasterAddress(const std::string&master_ip,int master_port){
-    master_addr_.sin_port=htons(master_port);
+        master_addr_.sin_port=htons(master_port);
+
         if (inet_pton(AF_INET, master_ip.c_str(), &master_addr_.sin_addr) != 1) {
             perror("Invalid IP address");
             return ;
@@ -42,9 +45,7 @@ namespace dts{
         Connection* conn=worker_client_->getConnection();
         return conn->sendMessage(msg);
     }
-
-
-
+    
     bool Worker::start(const std::string& master_ip, int master_port,
                        const std::string& worker_ip, int worker_port){
         //1.连接Master

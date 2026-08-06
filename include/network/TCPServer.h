@@ -10,9 +10,9 @@
 namespace dts{
 class TCPServer{
 private:
-int port_;
-int listen_fd_;
-std::unordered_map<int,std::shared_ptr<Connection>> connections_;
+    int port_;
+    int listen_fd_;
+    std::unordered_map<int,std::shared_ptr<Connection>> connections_;
 public:
     explicit TCPServer(int port);
     bool start();
