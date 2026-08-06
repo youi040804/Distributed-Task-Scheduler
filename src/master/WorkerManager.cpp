@@ -83,7 +83,7 @@ bool WorkerManager::increaseWorkerTaskCount(int workerId) {
     if (it == workers_.end()) {
         return false;
     }
-    it->second.incrementLoad();
+    it->second.increaseRunningTaskCount();
     return true;
 }
 

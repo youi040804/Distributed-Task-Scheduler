@@ -30,8 +30,8 @@ public:
     void setRunningTaskCount(size_t count);
     void updateHeartbeat();
 
-    void incrementLoad();
-    void decrementLoad();
+    void increaseRunningTaskCount();
+    void decreaseRunningTaskCount();
     bool isOverTime(int timeoutSeconds)const ;
     bool isAlive() const;
     void markDead();
