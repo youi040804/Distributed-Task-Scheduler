@@ -16,6 +16,7 @@ private:
     std::string worker_ip_;
     int worker_port_;
     size_t running_task_count_;
+    size_t queued_task_count_;//新增
     std::chrono::system_clock::time_point  last_heartbeat_time_;//只记录最后一次Heartbeat
     bool alive_;
 
@@ -26,12 +27,12 @@ public:
     int getPort()const;
     std::chrono::system_clock::time_point getLastHeartbeatTime()const;
 
-    size_t getRunningTaskCount() const;
-    void setRunningTaskCount(size_t count);
+    size_t getWorkerLoad()const;
+    void setRunningTaskCount(size_t runningCount);
+    void setQueuedTaskCount(size_t queuedCount);
+  
     void updateHeartbeat();
 
-    void increaseRunningTaskCount();
-    void decreaseRunningTaskCount();
     bool isOverTime(int timeoutSeconds)const ;
     bool isAlive() const;
     void markDead();

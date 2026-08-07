@@ -9,9 +9,9 @@
 
 namespace dts
     {
-    void WorkerManager::addWorker(WorkerInfo&&worker){
+    void WorkerManager::addWorker(WorkerInfo&& worker, std::shared_ptr<Connection> conn){
         std::lock_guard<std::mutex> lock(worker_mutex_);
-        workers_.emplace(worker.getWorkerId(),std::move(worker));
+        workers_.emplace(worker.getWorkerId(), WorkerSession{std::move(worker), conn});
     }
 
     bool WorkerManager:: hasWorker(int workerId)const {
@@ -28,7 +28,7 @@ namespace dts
         std::lock_guard<std::mutex> lock(worker_mutex_);
         auto it = workers_.find(workerId);
         if (it != workers_.end()) {
-            return it->second;
+            return it->second.info;
         }
         return std::nullopt;;
     }
@@ -39,10 +39,10 @@ namespace dts
         if (it == workers_.end()) {
             return false;
         }
-        it->second.updateHeartbeat();
+        it->second.info.updateHeartbeat();
         return true;
     }
-    bool WorkerManager::updateWorkerTaskCount(int workerId, size_t taskCount){
+    bool WorkerManager::updateWorkerLoad(int workerId, size_t runningCount, size_t queuedCount){
         std::lock_guard<std::mutex>lock(worker_mutex_);
         
         auto it=workers_.find(workerId);
@@ -50,7 +50,9 @@ namespace dts
             std::cout<<"worker not exist! Update task count failed!"<<std::endl;
             return false; 
         }
-        it->second.setRunningTaskCount(taskCount);
+
+        it->second.info.setRunningTaskCount(runningCount);
+        it->second.info.setQueuedTaskCount(queuedCount);
         return true;
     }
 
@@ -61,7 +63,7 @@ namespace dts
         std::lock_guard<std::mutex>lock(worker_mutex_);
 
         for(const auto& worker:workers_){
-            if(worker.second.isOverTime(HEARTBEAT_TIMEOUT))
+            if(worker.second.info.isOverTime(HEARTBEAT_TIMEOUT))
             timeoutList.push_back(worker.first);//push back workerID into timeoutList
         }
         return timeoutList;
@@ -74,21 +76,14 @@ namespace dts
             std::cout<<"worker not exist!"<<std::endl;
             return false;
         }
-        it->second.markDead();
-        return true;
-    }
-    bool WorkerManager::increaseWorkerTaskCount(int workerId) {
-        std::lock_guard<std::mutex> lock(worker_mutex_);
-        auto it = workers_.find(workerId);
-        if (it == workers_.end()) {
-            return false;
-        }
-        it->second.increaseRunningTaskCount();
+        it->second.info.markDead();
         return true;
     }
 
-    //Least Load 调度策略：选择当前运行任务最少的worker
+    // Least Load 调度策略：选择当前任务负载最小的 Worker
+    // Load = running_task_count + queued_task_count
     std::pair<int,size_t>WorkerManager::pickLeastLoadedWorker(){
+        std::lock_guard<std::mutex> lock(worker_mutex_);
         int workerId=-1;
         size_t LeastLoad=SIZE_MAX;
         if(workers_.empty()){
@@ -96,11 +91,11 @@ namespace dts
         }
 
         for(const auto&worker:workers_){
-            if(worker.second.isAlive()){
-                size_t load=worker.second.getRunningTaskCount();
+            if(worker.second.info.isAlive()){
+                size_t load=worker.second.info.getWorkerLoad();
                 if(load<LeastLoad){
                     LeastLoad=load;
-                    workerId=worker.second.getWorkerId();
+                    workerId=worker.second.info.getWorkerId();
                 }
             }
         
@@ -113,6 +108,28 @@ namespace dts
         return {workerId,LeastLoad};
 
     }
+    bool WorkerManager::sendTaskToWorker(int workerId,Message&msg){
+        std::shared_ptr<Connection>conn;
+        
+        // 锁外发送
+        // 1. 锁住，拿到 connection
+        {
+            std::lock_guard<std::mutex> lock(worker_mutex_);
+            auto it=workers_.find(workerId);
+            if(it==workers_.end()){
+                return false;
+            }
+            if(!it->second.info.isAlive()){
+                return false;
+            }
+            
+            conn = it->second.connection;  // 复制 shared_ptr
+        }  // ← 释放锁！
+        
+      
+        return conn->sendMessage(msg);
+    }
+
 
 
 } 

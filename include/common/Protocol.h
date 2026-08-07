@@ -22,7 +22,10 @@ struct WorkerRegisterInfo
 
 struct HeartbeatInfo{
     int worker_id=0;
-    size_t running_task_count=0;
+    size_t running_task_count=0;//worker正在执行的任务数量
+    size_t queued_task_count=0;//新增：表示worker的task_queue_里面的等待执行任务数量
+    //Worker Load=queued_task_count_ + running_task_count_
+
 };
 struct TaskSubmitInfo{
     int priority=0;

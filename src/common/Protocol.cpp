@@ -47,14 +47,18 @@ namespace dts{
     //辅助函数：HeartbeatInfo--string
     std::string Protocol::serializeHeartbeatInfo(const HeartbeatInfo&info){
         MessageBuilder builder;
-        builder<<info.worker_id<<info.running_task_count;
+        builder<<info.worker_id
+               <<info.running_task_count
+               <<info.queued_task_count;
         return builder.str();
     }
     HeartbeatInfo Protocol::deserializeHeartbeatInfo(const std::string&data){
         MessageParser parser(data);
         HeartbeatInfo heartbeatinfo;
-        parser>>heartbeatinfo.worker_id;
-        parser>>heartbeatinfo.running_task_count;
+
+        parser >> heartbeatinfo.worker_id 
+                >> heartbeatinfo.running_task_count 
+                >> heartbeatinfo.queued_task_count;   
         return heartbeatinfo;
     }
         

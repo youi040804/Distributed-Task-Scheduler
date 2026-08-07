@@ -10,6 +10,7 @@ namespace dts{
         , worker_ip_(workerIp)
         , worker_port_(workerPort)
         , running_task_count_(0)
+        , queued_task_count_(0)
         , last_heartbeat_time_(std::chrono::system_clock::now())
         , alive_(true)
     {
@@ -25,20 +26,18 @@ namespace dts{
     int WorkerInfo::getPort()const{
         return worker_port_;
     }
-    size_t WorkerInfo::getRunningTaskCount()const{
-        return running_task_count_;
+    size_t WorkerInfo::getWorkerLoad()const{
+        return running_task_count_+queued_task_count_;
     }
-    void WorkerInfo::setRunningTaskCount(size_t count){
-        running_task_count_=count;
+
+    void WorkerInfo::setRunningTaskCount(size_t runningCount){
+        running_task_count_=runningCount;
     }
-    void WorkerInfo::increaseRunningTaskCount(){
-        running_task_count_++;
+    void WorkerInfo::setQueuedTaskCount(size_t queuedCount){
+        queued_task_count_=queuedCount;
     }
-    void WorkerInfo::decreaseRunningTaskCount(){
-        if (running_task_count_ > 0) {
-            running_task_count_--;
-        }
-    }
+
+
     std::chrono::system_clock::time_point WorkerInfo::getLastHeartbeatTime()const{
         return last_heartbeat_time_;
     }

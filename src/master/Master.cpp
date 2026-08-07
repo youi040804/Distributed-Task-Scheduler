@@ -31,7 +31,7 @@ namespace dts{
         return true;
     }
 
-    void Master::handleWorkerRegister(const WorkerRegisterInfo&RegisterInfo){
+    void Master::handleWorkerRegister(const WorkerRegisterInfo&RegisterInfo,std::shared_ptr<Connection>conn){
         if(worker_manager_. hasWorker(RegisterInfo.worker_id))
         {
             std::cout<<"worker already exists!"<<std::endl;
@@ -39,7 +39,7 @@ namespace dts{
         }
         //不存在则插入
         WorkerInfo worker(RegisterInfo.worker_id,RegisterInfo.ip,RegisterInfo.port);
-        worker_manager_.addWorker(std::move(worker));
+        worker_manager_.addWorker(std::move(worker),conn);
         std::cout<<"worker added succeed!"<<std::endl;
     }
 
@@ -47,7 +47,7 @@ namespace dts{
         if (!worker_manager_.updateWorkerHeartbeat(info.worker_id)) {
             return false;
         }
-        return worker_manager_.updateWorkerTaskCount(info.worker_id, info.running_task_count);
+        return worker_manager_.updateWorkerLoad(info.worker_id,info.running_task_count,info.queued_task_count);
     }
 
     void Master::heartbeatLoop() {
@@ -93,7 +93,7 @@ namespace dts{
                 switch (msg.header.type) {
                     case MessageType::REGISTER_WORKER: {
                         WorkerRegisterInfo workerinfo = Protocol::deserializeWorkerInfo(msg.data);
-                        handleWorkerRegister(workerinfo);
+                        handleWorkerRegister(workerinfo,conn);
                         break;
                     }
                     case MessageType::HEARTBEAT: {

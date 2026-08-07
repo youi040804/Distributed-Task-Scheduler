@@ -62,7 +62,6 @@ namespace dts{
         return nullptr;
         auto taskPtr=readyQueue_.top();
         readyQueue_.pop();
-        taskPtr->setStatus(TaskStatus::RUNNING);
         return taskPtr;
     }
 

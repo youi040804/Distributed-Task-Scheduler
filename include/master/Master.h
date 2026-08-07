@@ -41,7 +41,7 @@ public:
     ~Master();
     bool start();
 
-    void handleWorkerRegister(const WorkerRegisterInfo&workerinfo);
+    void handleWorkerRegister(const WorkerRegisterInfo&workerinfo,std::shared_ptr<Connection>conn);
     bool handleHeartbeat(const HeartbeatInfo& info);
     void handleTaskSubmit(const TaskSubmitInfo&info);
     void schedulerLoop();
