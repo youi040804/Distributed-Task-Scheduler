@@ -118,7 +118,8 @@ namespace dts{
             sendToMaster(msg);
         }
     }
-
+    
+    // 生产者线程（receiveTaskLoop）
     void  Worker::receiveTaskLoop(){
         while (running_){
             Message msg=recvTaskAssign();
@@ -128,18 +129,44 @@ namespace dts{
             //将msg的data反序列化成TaskAssignInfo
             TaskAssignInfo taskinfo=Protocol::deserializeTaskAssignInfo(msg.data);
             //保存至task队列
-            task_queue_.push(taskinfo);
-            queued_task_count_++;
+            //加锁
+            {
+                std::lock_guard<std::mutex>lock(task_mutex_);
+                task_queue_.push(taskinfo);
+                queued_task_count_++;
+                //唤醒任务执行线程
+                task_cv_.notify_one();
+            }
+
         }
         
     }
-
+    
+    // 消费者线程
     void  Worker::executeTaskLoop(){
         while (running_){
-        //TODO:
-        //1.从task_queue_里面取出任务
-        //2.执行任务
-        //3.返回结果
+        //1.等待任务
+        std::unique_lock<std::mutex>lock(task_mutex_);
+        //停止等待的两种情况：1.Master要退出 2.队列里有任务
+        task_cv_.wait(lock,[this]{
+            return (!running_)||(!task_queue_.empty());
+        });
+        if(!running_) break;//Master停止，直接退出
+        
+
+        {
+        //2.从队列取出任务
+        //加锁
+            std::lock_guard<std::mutex>lock(task_mutex_);
+            auto task=task_queue_.front();
+        //3.更新 queued/running 计数
+            queued_task_count_--;
+            running_task_count_++;
+            task_queue_.pop();
+            //思考需要设置task状态为RUNNING吗？
+        }
+         
+        //3.调用 TaskExecutor 执行
         //思考和TaskExecutor.h,TaskExecutor.cpp之间的关系？
         
         }

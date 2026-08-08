@@ -28,6 +28,13 @@ public:
     std::chrono::system_clock::time_point getLastHeartbeatTime()const;
 
     size_t getWorkerLoad()const;
+    //新增
+    size_t getRunningTaskCount()const;
+    size_t getQueuedTaskCount()const;
+
+    void incrementQueuedTaskCount() ;
+    void decrementQueuedTaskCount();
+
     void setRunningTaskCount(size_t runningCount);
     void setQueuedTaskCount(size_t queuedCount);
   

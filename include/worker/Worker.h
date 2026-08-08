@@ -7,9 +7,10 @@
 #include<memory>
 #include<string>
 #include <atomic>
-#include<thread>
 #include<queue>
+#include<thread>
 #include<mutex>
+#include <condition_variable>
 #include"network/TCPClient.h"
 #include "common/Message.h"  
 #include"common/Protocol.h"
@@ -33,6 +34,8 @@ private:
     std::queue<TaskAssignInfo>task_queue_;
     std::unique_ptr<TaskExecutor>executor_;
     std::mutex task_mutex_;
+    //条件变量，用于生产者-消费者模型
+    std::condition_variable task_cv_;
 
 
 public:

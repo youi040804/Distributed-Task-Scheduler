@@ -32,9 +32,10 @@ private:
     //任务调度线程
     std::thread scheduler_thread_;
 
+    
     std::atomic<int>next_id_{1};//Task ID生成器
 
-    void heartbeatLoop();
+    
 
 public:
     Master(int master_port);
@@ -44,6 +45,8 @@ public:
     void handleWorkerRegister(const WorkerRegisterInfo&workerinfo,std::shared_ptr<Connection>conn);
     bool handleHeartbeat(const HeartbeatInfo& info);
     void handleTaskSubmit(const TaskSubmitInfo&info);
+    void handleConnection(std::shared_ptr<Connection>conn);
+    void heartbeatLoop();
     void schedulerLoop();
 
     // 转发给 WorkerManager（内联实现）

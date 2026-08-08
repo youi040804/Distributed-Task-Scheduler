@@ -33,6 +33,24 @@ namespace dts{
     void WorkerInfo::setRunningTaskCount(size_t runningCount){
         running_task_count_=runningCount;
     }
+    //新增
+    size_t  WorkerInfo::getRunningTaskCount()const{
+        return running_task_count_;
+    }
+
+    size_t WorkerInfo::getQueuedTaskCount()const{
+        return queued_task_count_;
+    }
+
+    void WorkerInfo::incrementQueuedTaskCount() {
+        ++queued_task_count_;
+    }
+
+    void WorkerInfo::decrementQueuedTaskCount() {
+        if (queued_task_count_ > 0) {
+            --queued_task_count_;
+        }
+    }
     void WorkerInfo::setQueuedTaskCount(size_t queuedCount){
         queued_task_count_=queuedCount;
     }

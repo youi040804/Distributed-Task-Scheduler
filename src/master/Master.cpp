@@ -24,11 +24,46 @@ namespace dts{
 
         running_=true;
         scheduler_=std::make_unique<Scheduler>(&task_manager_,&worker_manager_);
+
         //创建心跳检测线程
         heartbeat_thread_=std::thread(&Master::heartbeatLoop,this);
         //创建任务调度线程
         scheduler_thread_=std::thread(&Master::schedulerLoop,this);
         return true;
+    }
+
+    void Master::handleConnection(std::shared_ptr<Connection>conn){
+        //std::thread把参数conn传递给handleConnection函数
+        //等待收到消息
+        while (running_) {
+            Message msg = conn->receiveMessage();
+            if (msg.header.type == MessageType::UNKNOWN && msg.data.empty()) {
+                break;
+            }
+
+            switch (msg.header.type) {
+                case MessageType::REGISTER_WORKER: {
+                    WorkerRegisterInfo workerinfo = Protocol::deserializeWorkerInfo(msg.data);
+                    handleWorkerRegister(workerinfo,conn);
+                    break;
+                }
+                case MessageType::HEARTBEAT: {
+                    HeartbeatInfo info = Protocol::deserializeHeartbeatInfo(msg.data);
+                    handleHeartbeat(info);
+                    break;
+                }
+                case MessageType::SUBMIT_TASK: {
+                    TaskSubmitInfo info = Protocol::deserializeTaskSubmitInfo(msg.data);
+                    handleTaskSubmit(info);
+                    break;
+                }
+                default: {
+                    break;
+                }
+            }
+        }
+        //退出运行时调用Connection类的disconnect()
+        conn->disconnect();
     }
 
     void Master::handleWorkerRegister(const WorkerRegisterInfo&RegisterInfo,std::shared_ptr<Connection>conn){
@@ -83,34 +118,9 @@ namespace dts{
             if (!conn) {
                 continue;
             }
+            //Connection有效，创建一个线程
+            std::thread(&Master::handleConnection,this,conn).detach();//用 std::thread::detach() + 用 running_ 控制退出
 
-            while (running_) {
-                Message msg = conn->receiveMessage();
-                if (msg.header.type == MessageType::UNKNOWN && msg.data.empty()) {
-                    break;
-                }
-
-                switch (msg.header.type) {
-                    case MessageType::REGISTER_WORKER: {
-                        WorkerRegisterInfo workerinfo = Protocol::deserializeWorkerInfo(msg.data);
-                        handleWorkerRegister(workerinfo,conn);
-                        break;
-                    }
-                    case MessageType::HEARTBEAT: {
-                        HeartbeatInfo info = Protocol::deserializeHeartbeatInfo(msg.data);
-                        handleHeartbeat(info);
-                        break;
-                    }
-                    case MessageType::SUBMIT_TASK: {
-                        TaskSubmitInfo info = Protocol::deserializeTaskSubmitInfo(msg.data);
-                        handleTaskSubmit(info);
-                        break;
-                    }
-                    default: {
-                        break;
-                    }
-                }
-            }
         }
     }
 
@@ -118,6 +128,9 @@ namespace dts{
         running_=false;
         if(heartbeat_thread_.joinable()){
             heartbeat_thread_.join();
+        }
+        if(scheduler_thread_.joinable()){
+            scheduler_thread_.join();
         }
     }
 
