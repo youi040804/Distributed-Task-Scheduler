@@ -65,7 +65,8 @@ namespace dts{
         //socket文件描述符一般不为0
         if(socketfd>=0)
         {
-            close(socketfd);
+            shutdown(socketfd,SHUT_RDWR);// 1. 先唤醒
+            close(socketfd);// 2. 再释放             
             //关闭连接后将fd_置为-1；
             fd_=-1;
         }

@@ -5,6 +5,7 @@
 #include <arpa/inet.h>
 #include <cstring>
 #include <thread>
+#include<iostream>//用于打印调试信息
 #include"worker/Worker.h"
 #include"common/WorkerInfo.h"
 
@@ -13,7 +14,8 @@ namespace dts{
 
     Worker::Worker(int worker_id)
         : worker_id_(worker_id),
-        worker_client_(nullptr)
+        worker_client_(nullptr),
+        executor_(std::make_unique<TaskExecutor>())//初始化executor_
     {
         memset(&master_addr_, 0, sizeof(master_addr_));
         master_addr_.sin_family = AF_INET;
@@ -145,6 +147,9 @@ namespace dts{
     // 消费者线程
     void  Worker::executeTaskLoop(){
         while (running_){
+        TaskAssignInfo task;
+
+        {
         //1.等待任务
         std::unique_lock<std::mutex>lock(task_mutex_);
         //停止等待的两种情况：1.Master要退出 2.队列里有任务
@@ -153,27 +158,33 @@ namespace dts{
         });
         if(!running_) break;//Master停止，直接退出
         
-
-        {
         //2.从队列取出任务
-        //加锁
-            std::lock_guard<std::mutex>lock(task_mutex_);
-            auto task=task_queue_.front();
+            task=task_queue_.front();
         //3.更新 queued/running 计数
             queued_task_count_--;
             running_task_count_++;
             task_queue_.pop();
-            //思考需要设置task状态为RUNNING吗？
-        }
-         
+        }// ← 离开作用域，自动解锁
+
         //3.调用 TaskExecutor 执行
-        //思考和TaskExecutor.h,TaskExecutor.cpp之间的关系？
-        
+        TaskResultInfo result=executor_->execute(task);
+
+        //4.更新本地计数
+        running_task_count_--;
+
+        //5.构造返回消息   
+        Message msg;
+        msg.header.type=MessageType::TASK_RESULT;
+        msg.data=Protocol::serializeTaskResultInfo(result);
+        //5.发送执行结果给Master
+        //任务状态由Master来更新，Worker不负责更新任务状态
+        sendToMaster(msg);
         }
     }
 
 
     void Worker::stop(){
+        std::cout << "[Worker] stopping..." << std::endl;
         running_=false;
         //关闭连接，让recv退出
         if(worker_client_){
@@ -183,13 +194,21 @@ namespace dts{
             }
         }
         //唤醒等待任务线程
-        //TODO:等以后加入 condition_variable 时再添加 task_cv_.notify_all()
-        //task_cv_.notify_all();
+        
+        task_cv_.notify_all();
         
         // 等待所有线程结束
+        std::cout << "[Worker] joining heartbeat thread..." << std::endl;
         if(heartbeat_thread_.joinable()) heartbeat_thread_.join();
+        std::cout << "[Worker] heartbeat thread joined." << std::endl;
+
+        std::cout << "[Worker] joining receive thread..." << std::endl;
         if(task_recv_thread_.joinable()) task_recv_thread_.join();
+        std::cout << "[Worker] receive thread joined." << std::endl;
+
+        std::cout << "[Worker] joining execute thread..." << std::endl;
         if(task_execute_thread_.joinable()) task_execute_thread_.join();
+        std::cout << "[Worker] execute thread joined." << std::endl;
     }
 }
 
