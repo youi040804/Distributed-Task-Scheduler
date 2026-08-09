@@ -3,6 +3,7 @@
 */
 #include<iostream>
 #include"master/TaskManager.h"
+#include"common/Message.h"
 namespace dts{
 
     void TaskManager::addTask(Task task){
@@ -29,23 +30,45 @@ namespace dts{
         }
         return std::nullopt;
     }
-
-    bool TaskManager::updateTaskStatus(int task_id,TaskStatus status){
+    bool TaskManager::updateTaskStatus(int task_id,TaskStatus newStatus){
         std::lock_guard<std::mutex>lock(task_mutex_);
         auto it =tasks_.find(task_id);
-        if(it!=tasks_.end()){
-            it->second->setStatus(status);
-            return true;
+        if(it==tasks_.end()){
+            return false;
         }
+        TaskStatus oldStatus=it->second->getTaskStatus();
+        if(!canTransition(oldStatus,newStatus)){
+            std::cout<<"非法状态转移!"<<std::endl;
+            return false;
+        }
+        it->second->setStatus(newStatus);
+        return true;
+    }
+
+     std::optional<int> TaskManager::processTaskResult(int task_id, const std::string& result_data,const TaskStatus&status){
+        std::lock_guard<std::mutex>lock(task_mutex_);
+        auto it =tasks_.find(task_id);
+        if(it==tasks_.end()){
+            return std::nullopt;
+        }
+        auto task=it->second;
+        TaskStatus oldStatus=task->getTaskStatus();
+        if(!canTransition(oldStatus,status)){
+            return std::nullopt;
+        }
+        task->setStatus(status);
+        return task->getAssignedWorker();
+        // result_data是任务的"输出"——Worker 执行完任务的最终产物
+        // processTaskResult 把它存到 Task 对象里
+        // 后续有需要的话可以使用，目前暂时不实现
+    }
+    
+    bool TaskManager::removeTask(int task_id){
+       //暂时返回false，后期再实现具体逻辑
+
         return false;
     }
-    bool TaskManager::removeTask(int task_id){
-        //逻辑错误❌️暂时不实现，以后再设计
-        // std::lock_guard<std::mutex>lock(task_mutex_);
-        // if(tasks_.erase(task_id))
-             return true;
-        // return false;
-    }
+
 
     bool TaskManager::hasPendingTask(){
         std::lock_guard<std::mutex>lock(task_mutex_);

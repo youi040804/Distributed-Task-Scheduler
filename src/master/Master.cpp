@@ -57,6 +57,11 @@ namespace dts{
                     handleTaskSubmit(info);
                     break;
                 }
+                case MessageType::TASK_RESULT: {
+                    TaskResultInfo info = Protocol::deserializeTaskResultInfo(msg.data);
+                    handleTaskResult(info);
+                    break;
+                }
                 default: {
                     break;
                 }
@@ -79,9 +84,11 @@ namespace dts{
     }
 
     bool Master::handleHeartbeat(const HeartbeatInfo& info) {
+        // 1. 更新心跳时间
         if (!worker_manager_.updateWorkerHeartbeat(info.worker_id)) {
             return false;
         }
+        // 2. 同步 Worker 真实负载（由 Heartbeat 上报）
         return worker_manager_.updateWorkerLoad(info.worker_id,info.running_task_count,info.queued_task_count);
     }
 
@@ -102,6 +109,24 @@ namespace dts{
         //2.将Task保存到taskmanager里
         task_manager_.addTask(std::move(task));
     }
+
+    bool Master::handleTaskResult(const TaskResultInfo&info){
+        //先假设所有任务的返回结果都是成功的
+        //Master不负责更改任务状态，交由TaskManager来更新任务状态
+        //只处理 Task 状态，不修改 Worker 负载
+        auto worker_id=task_manager_.processTaskResult(info.task_id,info.payload,info.status);
+
+        if(!worker_id.has_value())
+        {
+            std::cout<<"task process failed"<<std::endl;
+            return false;
+        }
+        // 不修改 WorkerManager 的负载
+        // 等待下一次 Heartbeat 来同步真实负载
+        return true;
+
+    }
+
 
     void Master::schedulerLoop(){
         while(running_){

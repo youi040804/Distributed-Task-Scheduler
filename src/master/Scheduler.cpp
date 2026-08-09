@@ -54,17 +54,17 @@ namespace dts{
             return false;
         }
 
-        // 7. 发送成功后更新 Task、Master本地 queued_task_count + 1
+        // 7. 发送成功后更新 Task,不修改 WorkerManager负载
         task->setAssignedWorker(workerId);
-        task->setStatus(TaskStatus::RUNNING);
-        worker_manager_->incrementWorkerQueuedTaskCount(workerId);
+        task->setStatus(TaskStatus::RUNNING);// RUNNING表示任务已经被Worker接收并进入执行流程
 
         //8.打印调度信息
         std::cout << "[Scheduler] Task " << task->getTaskId()
                   << " (priority=" << task->getTaskPriority() << ")"
                   << " → Worker " << workerId
-                  << " (load=" << load << " → " << load + 1 << ")"
+                  << " (current load=" << load << ")"
                   << std::endl;
+
         return true;
 
     }

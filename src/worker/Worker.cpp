@@ -91,13 +91,13 @@ namespace dts{
             std::thread(&Worker::executeTaskLoop,this);
     }
 
-    void Worker::incrementRunningTasks() {
-        running_task_count_++;
-    }
-    void Worker::decrementRunningTasks() {
-         if (running_task_count_ > 0)
-         running_task_count_--;
-    }
+    // void Worker::incrementRunningTasks() {
+    //     running_task_count_++;
+    // }
+    // void Worker::decrementRunningTasks() {
+    //      if (running_task_count_ > 0)
+    //      running_task_count_--;
+    // }
 
     Message Worker::recvTaskAssign(){
        Connection* conn= worker_client_->getConnection();
@@ -135,11 +135,11 @@ namespace dts{
             {
                 std::lock_guard<std::mutex>lock(task_mutex_);
                 task_queue_.push(taskinfo);
-                queued_task_count_++;
-                //唤醒任务执行线程
-                task_cv_.notify_one();
             }
 
+                queued_task_count_++; // ← atomic 操作，不需要锁
+                //唤醒任务执行线程
+                task_cv_.notify_one();
         }
         
     }
@@ -160,11 +160,12 @@ namespace dts{
         
         //2.从队列取出任务
             task=task_queue_.front();
-        //3.更新 queued/running 计数
-            queued_task_count_--;
-            running_task_count_++;
+  
             task_queue_.pop();
         }// ← 离开作用域，自动解锁
+        // atomic 操作移到锁外面
+        queued_task_count_--;
+        running_task_count_++;
 
         //3.调用 TaskExecutor 执行
         TaskResultInfo result=executor_->execute(task);
@@ -198,17 +199,11 @@ namespace dts{
         task_cv_.notify_all();
         
         // 等待所有线程结束
-        std::cout << "[Worker] joining heartbeat thread..." << std::endl;
         if(heartbeat_thread_.joinable()) heartbeat_thread_.join();
-        std::cout << "[Worker] heartbeat thread joined." << std::endl;
 
-        std::cout << "[Worker] joining receive thread..." << std::endl;
         if(task_recv_thread_.joinable()) task_recv_thread_.join();
-        std::cout << "[Worker] receive thread joined." << std::endl;
 
-        std::cout << "[Worker] joining execute thread..." << std::endl;
         if(task_execute_thread_.joinable()) task_execute_thread_.join();
-        std::cout << "[Worker] execute thread joined." << std::endl;
     }
 }
 

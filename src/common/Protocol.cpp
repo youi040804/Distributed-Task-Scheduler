@@ -93,7 +93,7 @@ namespace dts{
     //辅助函数：TaskResultInfo--string
     std::string Protocol::serializeTaskResultInfo(const TaskResultInfo&info){
         MessageBuilder builder;
-        builder<<info.task_id<< static_cast<int>(info.status)<<info.payload;
+        builder<<info.task_id<<static_cast<int>(info.status)<<info.payload;
         return builder.str();
     }
     TaskResultInfo Protocol::deserializeTaskResultInfo(const std::string&data){

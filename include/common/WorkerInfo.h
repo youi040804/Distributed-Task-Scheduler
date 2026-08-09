@@ -32,9 +32,6 @@ public:
     size_t getRunningTaskCount()const;
     size_t getQueuedTaskCount()const;
 
-    void incrementQueuedTaskCount() ;
-    void decrementQueuedTaskCount();
-
     void setRunningTaskCount(size_t runningCount);
     void setQueuedTaskCount(size_t queuedCount);
   

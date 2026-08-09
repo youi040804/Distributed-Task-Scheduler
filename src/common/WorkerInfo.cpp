@@ -42,15 +42,6 @@ namespace dts{
         return queued_task_count_;
     }
 
-    void WorkerInfo::incrementQueuedTaskCount() {
-        ++queued_task_count_;
-    }
-
-    void WorkerInfo::decrementQueuedTaskCount() {
-        if (queued_task_count_ > 0) {
-            --queued_task_count_;
-        }
-    }
     void WorkerInfo::setQueuedTaskCount(size_t queuedCount){
         queued_task_count_=queuedCount;
     }

@@ -32,10 +32,8 @@ private:
     //任务调度线程
     std::thread scheduler_thread_;
 
-    
     std::atomic<int>next_id_{1};//Task ID生成器
 
-    
 
 public:
     Master(int master_port);
@@ -46,6 +44,10 @@ public:
     bool handleHeartbeat(const HeartbeatInfo& info);
     void handleTaskSubmit(const TaskSubmitInfo&info);
     void handleConnection(std::shared_ptr<Connection>conn);
+
+    //新增处理task_result的函数
+    bool handleTaskResult(const TaskResultInfo&info);
+
     void heartbeatLoop();
     void schedulerLoop();
 
