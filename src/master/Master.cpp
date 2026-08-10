@@ -115,12 +115,13 @@ namespace dts{
         //Master不负责更改任务状态，交由TaskManager来更新任务状态
         //只处理 Task 状态，不修改 Worker 负载
         auto worker_id=task_manager_.processTaskResult(info.task_id,info.payload,info.status);
-
+        
         if(!worker_id.has_value())
         {
             std::cout<<"task process failed"<<std::endl;
             return false;
         }
+
         // 不修改 WorkerManager 的负载
         // 等待下一次 Heartbeat 来同步真实负载
         return true;

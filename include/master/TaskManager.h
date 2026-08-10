@@ -31,16 +31,19 @@ private:
                         std::vector<std::shared_ptr<Task>>,
                         TaskPriorityComparator>readyQueue_;//根据t<ask的priority进行排序
     mutable std::mutex task_mutex_;
-
+    // 内部无锁版本（不加锁，调用者必须已持有 task_mutex_）
+    void pushBackTaskUnsafe(std::shared_ptr<Task> task);
 public:
     void addTask(Task task);
-    void pushBackTask(std::shared_ptr<Task>task);//新增“把任务放回队列”的方法
+    // 外部版本（加锁，供 Scheduler 等外部调用）
+    void pushBackTask(std::shared_ptr<Task> task);
     
     std::optional<std::shared_ptr<Task>> getTask(int task_id)const;
     //通用状态修改器—— 用于"分配任务"等只需要改状态的场景
     bool updateTaskStatus(int task_id,TaskStatus newStatus);
     // 新增 —— 专门用于"任务完成"场景
     std::optional<int> processTaskResult(int task_id, const std::string& result_data,const TaskStatus&status);
+
 
     bool removeTask(int task_id);
     bool hasPendingTask();

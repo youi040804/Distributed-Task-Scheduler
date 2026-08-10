@@ -6,6 +6,8 @@
 #include <cstring>
 #include <thread>
 #include<iostream>//用于打印调试信息
+#include<exception>
+#include <stdexcept> 
 #include"worker/Worker.h"
 #include"common/WorkerInfo.h"
 
@@ -91,14 +93,7 @@ namespace dts{
             std::thread(&Worker::executeTaskLoop,this);
     }
 
-    // void Worker::incrementRunningTasks() {
-    //     running_task_count_++;
-    // }
-    // void Worker::decrementRunningTasks() {
-    //      if (running_task_count_ > 0)
-    //      running_task_count_--;
-    // }
-
+  
     Message Worker::recvTaskAssign(){
        Connection* conn= worker_client_->getConnection();
        return conn->receiveMessage();
@@ -168,7 +163,12 @@ namespace dts{
         running_task_count_++;
 
         //3.调用 TaskExecutor 执行
-        TaskResultInfo result=executor_->execute(task);
+        TaskResultInfo result;
+        try{
+            result=executor_->execute(task);
+        }catch(const std::exception&e){
+            result={task.task_id,TaskStatus::FAILED,e.what()};
+        }
 
         //4.更新本地计数
         running_task_count_--;

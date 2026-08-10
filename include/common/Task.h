@@ -14,7 +14,6 @@ enum class TaskStatus
     FAILED=2,
     DONE=3
 };
-
 class Task{
 private:
     int task_id_;

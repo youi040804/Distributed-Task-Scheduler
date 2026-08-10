@@ -14,5 +14,8 @@ namespace dts {
 
     // 心跳超时阈值（秒）：超过此时间未收到心跳，视为死亡
     constexpr int HEARTBEAT_TIMEOUT = 10;
+    
+    //默认最大重试次数
+    constexpr int MAX_TASK_RETRY = 3;
 
 }
