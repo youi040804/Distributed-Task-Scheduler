@@ -43,12 +43,12 @@ namespace dts{
         return worker_client_->connect();
     }
 
-    //由原来的发送字符串改为发送真正的Message
-    bool Worker::sendToMaster(Message&msg){
+    bool Worker::sendToMaster(const Message&msg){
+        if(!worker_client_) return false;
         Connection* conn=worker_client_->getConnection();
+        if(!conn) return false;
         return conn->sendMessage(msg);
     }
-
     bool Worker::start(const std::string& master_ip, int master_port,
                        const std::string& worker_ip, int worker_port){
         //1.连接Master
@@ -109,10 +109,9 @@ namespace dts{
             Message msg;
             msg.header.type=MessageType::HEARTBEAT;
             msg.data=Protocol::serializeHeartbeatInfo(info);
-
-            std::this_thread::sleep_for(std::chrono::seconds(HEARTBEAT_INTERVAL));
-
-            sendToMaster(msg);
+            
+            sendToMaster(msg);// ← 先发
+            std::this_thread::sleep_for(std::chrono::seconds(HEARTBEAT_INTERVAL));// ← 再睡
         }
     }
     
@@ -121,7 +120,7 @@ namespace dts{
         while (running_){
             Message msg=recvTaskAssign();
             if(msg.header.type!=MessageType::TASK_ASSIGN){
-                return ;
+                continue; //一次异常消息不应该杀死Worker接收线程
             }
             //将msg的data反序列化成TaskAssignInfo
             TaskAssignInfo taskinfo=Protocol::deserializeTaskAssignInfo(msg.data);

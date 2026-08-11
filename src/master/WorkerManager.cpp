@@ -90,17 +90,19 @@ namespace dts
             return {workerId,0};
         }
 
-        for(const auto&worker:workers_){
-            if(worker.second.info.isAlive()){
-                size_t load=worker.second.info.getWorkerLoad();
-                if(load<LeastLoad){
-                    LeastLoad=load;
-                    workerId=worker.second.info.getWorkerId();
+
+        for (const auto& worker : workers_) {
+            if (worker.second.info.isAlive()) {
+                size_t load = worker.second.info.getWorkerLoad();
+                // 使用 pair 比较：先比负载，再比 ID
+                if (std::pair<size_t, int>{load, worker.first} < 
+                    std::pair<size_t, int>{LeastLoad, workerId}) {
+                    LeastLoad = load;
+                    workerId = worker.first;
                 }
             }
-        
         }
-        
+
         // 没有可用 Worker 时，负载返回 0
         if (workerId == -1) {
             return {workerId, 0};

@@ -45,7 +45,7 @@ public:
 
     bool start(const std::string& master_ip, int master_port,const std::string& worker_ip, int worker_port); 
     void startThreads();
-    bool sendToMaster(Message& msg); 
+    bool sendToMaster(const Message& msg); 
   
     bool sendHeartbeat();
     void heartbeatLoop();

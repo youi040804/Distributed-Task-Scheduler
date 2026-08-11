@@ -18,7 +18,7 @@ public:
     explicit Connection(int fd ,sockaddr_in addr);
     virtual ~Connection()=default;
 
-    virtual bool sendMessage(Message&msg);
+    virtual bool sendMessage(const Message&msg);
     bool send(const std::string&data,uint32_t total_len);//底层send()
 
     Message receiveMessage();

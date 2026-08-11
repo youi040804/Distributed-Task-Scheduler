@@ -16,7 +16,7 @@ namespace dts{
     }
 
     //sendMessage调用序列化函数
-    bool Connection::sendMessage(Message&msg){
+    bool Connection::sendMessage(const Message&msg){
 
     std::string raw=Protocol::serialize(msg);
         //调用底层send函数

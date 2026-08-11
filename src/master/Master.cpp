@@ -103,6 +103,8 @@ namespace dts{
     }
 
     void Master::handleTaskSubmit(const TaskSubmitInfo&info){
+        // TODO: 当前是单向通知，Client无法获知task_id
+        // 后续需要改为请求-响应模型，返回任务ID
         //1.创建Task
         int id=next_id_.fetch_add(1);//原子递增
         Task task(id,info.priority,info.payload);

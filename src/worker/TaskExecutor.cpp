@@ -8,12 +8,6 @@
 #include <stdexcept> 
 #include"worker/TaskExecutor.h"
 
-// struct TaskResultInfo{
-//     int task_id=0;
-//     TaskStatus status=TaskStatus::FAILED;
-//     std::string payload="";
-// };
-
 namespace dts{
     
 TaskResultInfo TaskExecutor::execute(const TaskAssignInfo&task){
