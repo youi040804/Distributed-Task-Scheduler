@@ -119,3 +119,11 @@ add_executable(task_manager_test
 target_link_libraries(task_manager_test
     dts_core
 )
+
+add_executable(worker_manager_test
+    tests/master/worker_manager_test.cpp
+)
+
+target_link_libraries(worker_manager_test
+    dts_core
+)
