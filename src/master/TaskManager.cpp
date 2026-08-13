@@ -66,7 +66,7 @@ namespace dts{
         if(status==TaskStatus::FAILED){
             task->increaseRetryCount();
 
-            if(task->getRetryCount()<MAX_TASK_RETRY){
+            if(task->getRetryCount()<=MAX_TASK_RETRY){
                 // 还有重试次数，重新调度
                 pushBackTaskUnsafe(task);
                 return std::nullopt; //重试时返回空，表示没有 worker

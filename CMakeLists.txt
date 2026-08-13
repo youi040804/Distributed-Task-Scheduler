@@ -112,3 +112,10 @@ add_executable(register_test
 target_link_libraries(register_test
     dts_core
 )
+add_executable(task_manager_test
+    tests/master/task_manager_test.cpp
+)
+
+target_link_libraries(task_manager_test
+    dts_core
+)
