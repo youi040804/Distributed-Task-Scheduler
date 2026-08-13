@@ -14,7 +14,6 @@ namespace dts{
     bool Scheduler::schedulerOnce(){
         //1.检查是否有任务
         if(!task_manager_->hasPendingTask()){
-            std::cout<<"no pending task!"<<std::endl;
             return false;
         }
 

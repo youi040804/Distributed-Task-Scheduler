@@ -4,6 +4,7 @@
  */
 #include <unistd.h>
 #include<sys/socket.h>
+#include<sys/select.h>
 #include<iostream>
 #include"network/TCPServer.h"
 namespace dts{
@@ -44,11 +45,29 @@ namespace dts{
     }
 
     std::shared_ptr<Connection> TCPServer::acceptConnection(){
+        if(listen_fd_<0){
+            return nullptr;
+        }
+        fd_set read_fds;
+        FD_ZERO(&read_fds);
+        FD_SET(listen_fd_,&read_fds);
+
+        timeval timeout;
+        timeout.tv_sec=0;
+        timeout.tv_usec=200000;//最多等待200ms
+        
+        int ready=select(listen_fd_+1,&read_fds,nullptr,nullptr,&timeout);
+
+        //超时，被stop()关闭，或发生错误时，交给Master::run()决定是否退出
+        if(ready<=0){
+            return nullptr;
+        }
+
         sockaddr_in client_addr={};
         socklen_t addrlen=sizeof(client_addr);
         int client_fd=accept(listen_fd_,(sockaddr*)&client_addr,&addrlen);
         if(client_fd<0){
-            perror("Server acceptConnection failed!");
+            // stop() 关闭监听 socket 时，accept 失败属于正常退出路径
             return nullptr;
         }
         connections_[client_fd] = std::make_shared<dts::Connection>(client_fd, client_addr);

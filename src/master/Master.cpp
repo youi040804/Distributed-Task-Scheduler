@@ -154,6 +154,10 @@ namespace dts{
 
     void Master::stop(){
         running_=false;
+        //关闭监听socket，唤醒阻塞在accept()的Master主线程
+        if(master_server_){
+            master_server_->stop();
+        }
         if(heartbeat_thread_.joinable()){
             heartbeat_thread_.join();
         }

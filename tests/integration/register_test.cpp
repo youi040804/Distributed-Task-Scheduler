@@ -8,6 +8,7 @@
 #include <thread>
 #include <chrono>
 #include <unistd.h>
+#include<cassert>
 #include "master/Master.h"
 #include "common/Protocol.h"
 #include "network/TCPClient.h"
@@ -87,14 +88,14 @@ int main() {
 
     // 7. 验证 Worker 是否注册成功
     std::cout << "[Step 7] 验证注册结果..." << std::endl;
-    const WorkerInfo* stored = master.getWorkerInfo(1);
-    if (stored != nullptr) {
-        std::cout << "✅ Worker 注册成功！" << std::endl;
-        std::cout << "   Worker ID: " << stored->getWorkerId() << std::endl;
-        std::cout << "   IP: " << stored->getIp() << std::endl;
-        std::cout << "   Port: " << stored->getPort() << std::endl;
-        std::cout << "   运行任务数: " << stored->getRunningTaskCount() << std::endl;
-        std::cout << "   存活状态: " << (stored->isAlive() ? "存活" : "已死亡") << std::endl;
+    auto stored = master.getWorkerInfo(1);
+    if (stored.has_value()) {
+        assert(stored->getWorkerId()==info.worker_id);
+        assert(stored->getIp()==info.ip);
+        assert(stored->getPort()==info.port);
+        assert(stored->getRunningTaskCount()==0);
+        assert(stored->isAlive());
+       
     } else {
         std::cout << "❌ Worker 注册失败！Worker 未在 Manager 中找到" << std::endl;
         return 1;
@@ -105,7 +106,10 @@ int main() {
     std::cout << "[Step 8] 清理资源..." << std::endl;
     // 这里需要让 Master 停止，但我们暂时没有 stop 方法
     // 简单起见，直接 detach 线程
-    master_thread.detach();
+    master.stop();
+    if(master_thread.joinable()){
+        master_thread.join();
+    }
     std::cout << "✅ 清理完成" << std::endl;
     std::cout << std::endl;
 
