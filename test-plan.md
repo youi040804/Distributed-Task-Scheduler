@@ -217,3 +217,37 @@ ctest --output-on-failure
 - 最终 `retry_count` 为 `4`，即首次执行加 3 次额外重试；
 - 最终任务不再绑定任何 Worker，`assigned_worker` 为 `-1`；
 - CTest 中 `task_retry_e2e_test` 通过。
+
+### T007：心跳刷新与超时集成测试
+
+**测试目标**
+
+验证真实 Worker 能够周期性发送心跳，Master 能够刷新其存活时间；Worker 停止后，Master 能够在超时阈值后将其标记为死亡。
+
+**前置条件**
+
+- Master 监听本机端口 `8083`；
+- 创建 ID 为 `1` 的 Worker，并连接到 Master；
+- `HEARTBEAT_INTERVAL = 3` 秒；
+- `HEARTBEAT_TIMEOUT = 10` 秒；
+- Master 的心跳检测周期为 `3` 秒。
+
+**测试步骤**
+
+1. 启动 Master，并在后台线程运行主循环；
+2. 启动 Worker，完成注册并启动心跳线程；
+3. 查询并记录 Master 保存的初始心跳时间；
+4. 等待一个心跳周期以上；
+5. 再次查询 Worker 信息，确认心跳时间已更新且 Worker 仍为存活状态；
+6. 停止 Worker，使其不再发送心跳；
+7. 轮询等待 Master 的超时检测；
+8. 确认 Worker 被标记为死亡；
+9. 停止 Master 并回收主线程。
+
+**预期结果**
+
+- Worker 注册后处于存活状态；
+- 后续真实心跳会刷新 Master 中记录的心跳时间；
+- 收到新心跳后 Worker 仍处于存活状态；
+- Worker 停止并超过超时阈值后，Master 将其标记为死亡；
+- CTest 中 `heartbeat_timeout_e2e_test` 通过。

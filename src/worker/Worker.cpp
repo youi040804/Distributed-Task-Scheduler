@@ -16,6 +16,7 @@ namespace dts{
 
     Worker::Worker(int worker_id)
         : worker_id_(worker_id)
+        ,running_(false)
         ,worker_client_(nullptr)
         ,running_task_count_(0)
         ,queued_task_count_(0)
