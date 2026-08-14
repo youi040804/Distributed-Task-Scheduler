@@ -183,3 +183,37 @@ ctest --output-on-failure
 - Master 最终将任务状态更新为 `DONE`；
 - 所有线程和网络连接能够正常停止；
 - CTest 中 `task_e2e_test` 通过。
+
+### T006：任务失败重试闭环集成测试
+
+**测试目标**
+
+验证任务在真实 Client、Master、Worker 链路中执行失败后，能够按照最大重试次数重新调度，并在重试次数耗尽后最终失败。
+
+**前置条件**
+
+- Master 监听本机端口 `8082`；
+- 创建 ID 为 `1` 的 Worker，并连接到 Master；
+- 创建 Client，并连接到同一 Master；
+- `MAX_TASK_RETRY = 3`；
+- TaskExecutor 将空 payload 视为执行失败。
+
+**测试步骤**
+
+1. 启动 Master，并在后台线程运行主循环；
+2. 启动 Worker，确认其已成功注册到 Master；
+3. 启动 Client，提交一个 payload 为空的任务；
+4. Worker 接收任务后执行失败，并向 Master 返回 `FAILED` 结果；
+5. Master 将任务重新放回待调度队列；
+6. 重复执行失败与重新调度流程；
+7. 轮询查询任务状态，确认任务经过 3 次重试后最终为 `FAILED`；
+8. 检查最终任务的重试次数、已分配 Worker ID，并停止所有组件。
+
+**预期结果**
+
+- 空 payload 的任务会被 Worker 判定为执行失败；
+- 前 3 次失败后，任务重新进入 `PENDING` 并再次被调度；
+- 第 4 次失败后，任务状态为 `FAILED`；
+- 最终 `retry_count` 为 `4`，即首次执行加 3 次额外重试；
+- 最终任务不再绑定任何 Worker，`assigned_worker` 为 `-1`；
+- CTest 中 `task_retry_e2e_test` 通过。

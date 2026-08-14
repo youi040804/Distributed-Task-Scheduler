@@ -140,6 +140,14 @@ target_link_libraries(task_e2e_test
     dts_core
 )
 
+add_executable(task_retry_e2e_test
+    tests/integration/task_retry_e2e_test.cpp
+)
+
+target_link_libraries(task_retry_e2e_test
+    dts_core
+)
+
 # ========================
 # CTest registration
 # ========================
@@ -166,5 +174,11 @@ add_test(
     NAME task_e2e_test
     COMMAND task_e2e_test
 )
-
 set_tests_properties(task_e2e_test PROPERTIES TIMEOUT 10)
+
+
+add_test(
+    NAME task_retry_e2e_test
+    COMMAND task_retry_e2e_test
+)
+set_tests_properties(task_retry_e2e_test PROPERTIES TIMEOUT 10)
