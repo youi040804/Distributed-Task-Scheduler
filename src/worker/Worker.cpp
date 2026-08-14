@@ -15,9 +15,11 @@
 namespace dts{
 
     Worker::Worker(int worker_id)
-        : worker_id_(worker_id),
-        worker_client_(nullptr),
-        executor_(std::make_unique<TaskExecutor>())//初始化executor_
+        : worker_id_(worker_id)
+        ,worker_client_(nullptr)
+        ,running_task_count_(0)
+        ,queued_task_count_(0)
+        ,executor_(std::make_unique<TaskExecutor>())//初始化executor_
     {
         memset(&master_addr_, 0, sizeof(master_addr_));
         master_addr_.sin_family = AF_INET;

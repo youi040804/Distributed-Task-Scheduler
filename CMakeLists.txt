@@ -63,6 +63,9 @@ set(DTS_CORE_SRC
     # worker
     src/worker/TaskExecutor.cpp
     src/worker/Worker.cpp
+
+    #client
+    src/client/Client.cpp
 )
 
 
@@ -128,6 +131,15 @@ add_executable(worker_manager_test
 target_link_libraries(worker_manager_test
     dts_core
 )
+
+add_executable(task_e2e_test
+    tests/integration/task_e2e_test.cpp
+)
+
+target_link_libraries(task_e2e_test
+    dts_core
+)
+
 # ========================
 # CTest registration
 # ========================
@@ -150,3 +162,9 @@ add_test(
     NAME worker_manager_test
     COMMAND worker_manager_test
 )
+add_test(
+    NAME task_e2e_test
+    COMMAND task_e2e_test
+)
+
+set_tests_properties(task_e2e_test PROPERTIES TIMEOUT 10)

@@ -56,6 +56,9 @@ public:
         return worker_manager_.getWorkerInfo(workerId);
     }
 
+    std::optional<std::shared_ptr<Task>>getTask(int taskId)const{
+        return task_manager_.getTask(taskId);
+    }
     void run();
     void stop();
 

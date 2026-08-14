@@ -150,3 +150,36 @@ ctest --output-on-failure
 - 一条命令即可执行全部已注册测试；
 - 所有测试均通过；
 - 任一测试失败时，CTest 能输出对应失败信息。
+
+### T005：正常任务闭环集成测试
+
+**测试目标**
+
+验证 Client、Master 和 Worker 能够通过真实 TCP 连接完成一次正常任务的提交、调度、执行、结果回传和最终状态更新。
+
+**前置条件**
+
+- Master 监听本机端口 `8081`；
+- 创建 ID 为 `1` 的 Worker，并连接到 Master；
+- 创建 Client，并连接到同一 Master；
+- TaskExecutor 能够正常执行非空 payload 的任务。
+
+**测试步骤**
+
+1. 启动 Master，并在后台线程运行主循环；
+2. 启动 Worker，向 Master 发送注册消息并启动心跳、任务接收和任务执行线程；
+3. 轮询确认 Master 已保存该 Worker；
+4. 启动 Client，提交一个优先级为 `10`、payload 为非空字符串的任务；
+5. 轮询查询 Master 中 ID 为 `1` 的任务状态；
+6. 在规定时间内确认任务状态变为 `DONE`；
+7. 依次停止 Client、Worker、Master，并回收 Master 主线程。
+
+**预期结果**
+
+- Worker 能成功注册到 Master；
+- Client 提交的任务被 Master 创建并加入待调度队列；
+- Scheduler 能选择已注册的 Worker 并发送任务；
+- Worker 能接收并执行任务，随后返回 `TASK_RESULT`；
+- Master 最终将任务状态更新为 `DONE`；
+- 所有线程和网络连接能够正常停止；
+- CTest 中 `task_e2e_test` 通过。

@@ -52,4 +52,13 @@ namespace dts{
         }
         return true;
     }
+    void Client::stop(){
+        if(!client_){
+            return ;
+        }
+        Connection*conn=client_->getConnection();
+        if(conn){
+            conn->disconnect();
+        }
+    }
 }
