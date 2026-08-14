@@ -162,6 +162,13 @@ add_executable(no_worker_task_e2e_test
 target_link_libraries(no_worker_task_e2e_test
     dts_core
 )
+add_executable(scheduler_failure_test
+    tests/master/scheduler_failure_test.cpp
+)
+
+target_link_libraries(scheduler_failure_test
+    dts_core
+)
 # ========================
 # CTest registration
 # ========================
@@ -208,3 +215,8 @@ add_test(
     COMMAND no_worker_task_e2e_test
 )
 set_tests_properties(no_worker_task_e2e_test PROPERTIES TIMEOUT 10)
+
+add_test(
+    NAME scheduler_failure_test
+    COMMAND scheduler_failure_test
+)

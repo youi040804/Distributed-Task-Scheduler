@@ -282,3 +282,36 @@ ctest --output-on-failure
 - 任务未绑定 Worker，`assigned_worker` 为 `-1`；
 - 任务重试次数保持为 `0`；
 - CTest 中 `no_worker_task_e2e_test` 通过。
+
+### T009：任务发送失败回退单元测试
+
+**测试目标**
+
+验证 Scheduler 已选择存活 Worker 后，若 `TASK_ASSIGN` 消息发送失败，任务能够重新进入待调度队列，而不会被错误标记为运行中或丢失。
+
+**前置条件**
+
+- 创建独立的 TaskManager、WorkerManager 和 Scheduler；
+- 添加一个存活 Worker；
+- 为该 Worker 注入模拟发送失败的 Connection；
+- 创建一个待调度任务。
+
+**测试步骤**
+
+1. 创建继承自 Connection 的 FailingConnection；
+2. 重写 `sendMessage()`，使其始终返回 `false`；
+3. 将 FailingConnection 作为 Worker 的连接加入 WorkerManager；
+4. 添加一个优先级为 `10` 的待调度任务；
+5. 调用一次 `schedulerOnce()`；
+6. 查询任务状态、已分配 Worker ID 和重试次数；
+7. 再次从待调度队列取出任务，确认该任务仍在队列中。
+
+**预期结果**
+
+- Scheduler 能选择该 Worker；
+- 向 Worker 发送任务失败后，`schedulerOnce()` 返回 `false`；
+- 任务状态保持为 `PENDING`；
+- 任务未绑定 Worker，`assigned_worker` 为 `-1`；
+- 任务重试次数保持为 `0`；
+- 任务被重新放回待调度队列；
+- CTest 中 `scheduler_failure_test` 通过。
