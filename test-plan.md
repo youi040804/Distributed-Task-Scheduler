@@ -251,3 +251,34 @@ ctest --output-on-failure
 - 收到新心跳后 Worker 仍处于存活状态；
 - Worker 停止并超过超时阈值后，Master 将其标记为死亡；
 - CTest 中 `heartbeat_timeout_e2e_test` 通过。
+
+### T008：无可用 Worker 时任务保留集成测试
+
+**测试目标**
+
+验证 Master 没有任何已注册或存活 Worker 时，Scheduler 不会丢失任务，也不会将任务错误地标记为运行中。
+
+**前置条件**
+
+- Master 监听本机端口 `8084`；
+- 不启动任何 Worker；
+- 创建 Client，并连接到该 Master。
+
+**测试步骤**
+
+1. 启动 Master，并在后台线程运行主循环；
+2. 不注册任何 Worker；
+3. 启动 Client，提交一个正常的非空任务；
+4. 轮询确认 Master 已创建该任务；
+5. 等待多个调度周期；
+6. 查询任务的状态、已分配 Worker ID 和重试次数；
+7. 停止 Client、Master，并回收 Master 主线程。
+
+**预期结果**
+
+- Master 能成功接收 Client 提交的任务；
+- Scheduler 检测到没有可用 Worker 后，会将任务放回待调度队列；
+- 任务状态保持为 `PENDING`；
+- 任务未绑定 Worker，`assigned_worker` 为 `-1`；
+- 任务重试次数保持为 `0`；
+- CTest 中 `no_worker_task_e2e_test` 通过。

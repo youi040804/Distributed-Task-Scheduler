@@ -155,6 +155,13 @@ target_link_libraries(heartbeat_timeout_e2e_test
     dts_core
 )
 
+add_executable(no_worker_task_e2e_test
+    tests/integration/no_worker_task_e2e_test.cpp
+)
+
+target_link_libraries(no_worker_task_e2e_test
+    dts_core
+)
 # ========================
 # CTest registration
 # ========================
@@ -194,5 +201,10 @@ add_test(
     NAME heartbeat_timeout_e2e_test
     COMMAND heartbeat_timeout_e2e_test
 )
-
 set_tests_properties(heartbeat_timeout_e2e_test PROPERTIES TIMEOUT 30)
+
+add_test(
+    NAME no_worker_task_e2e_test
+    COMMAND no_worker_task_e2e_test
+)
+set_tests_properties(no_worker_task_e2e_test PROPERTIES TIMEOUT 10)
