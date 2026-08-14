@@ -19,6 +19,7 @@
 cmake_minimum_required(VERSION 3.15)
 
 project(DistributedTaskScheduler)
+enable_testing()
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -126,4 +127,26 @@ add_executable(worker_manager_test
 
 target_link_libraries(worker_manager_test
     dts_core
+)
+# ========================
+# CTest registration
+# ========================
+
+add_test(
+    NAME protocol_test
+    COMMAND protocol_test
+)
+add_test(
+    NAME register_test
+    COMMAND register_test
+)
+
+add_test(
+    NAME task_manager_test
+    COMMAND task_manager_test
+)
+
+add_test(
+    NAME worker_manager_test
+    COMMAND worker_manager_test
 )
