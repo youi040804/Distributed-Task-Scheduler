@@ -129,3 +129,24 @@ ctest --output-on-failure
 - 所有 Worker 死亡时，选择接口返回 Worker ID `-1`；
 - 死亡 Worker 收到新的心跳后恢复为存活状态；
 - 心跳时间超过阈值时，Worker 被正确判定为超时。
+
+### T004：CTest 统一测试接入
+
+**测试目标**
+
+将已有的测试可执行文件注册到 CTest，使项目能够通过统一命令自动执行测试并汇总结果。
+
+**测试步骤**
+
+1. 在 `CMakeLists.txt` 中启用 CTest；
+2. 注册 `protocol_test`、`register_test`、`task_manager_test`、`worker_manager_test`；
+3. 重新执行 CMake 配置与编译；
+4. 执行 `ctest -N` 查看已发现的测试；
+5. 执行 `ctest --output-on-failure` 运行全部测试。
+
+**预期结果**
+
+- CTest 能识别 4 个测试；
+- 一条命令即可执行全部已注册测试；
+- 所有测试均通过；
+- 任一测试失败时，CTest 能输出对应失败信息。
