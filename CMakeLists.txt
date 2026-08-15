@@ -241,9 +241,6 @@ add_test(
 )
 set_tests_properties(connection_framing_test PROPERTIES TIMEOUT 5)
 
-target_link_libraries(graceful_stop_test
-    dts_core
-)
 
 add_test(
     NAME graceful_stop_test

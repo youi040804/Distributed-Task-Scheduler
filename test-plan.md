@@ -344,7 +344,7 @@ ctest --output-on-failure
 - 超过旧固定缓冲区上限的消息可以完整接收；
 - 两条粘连消息可以按原始顺序被分别读取；
 - 接收端只根据协议 `length` 读取当前消息的 data 部分；
-- CTest 中 `connection_framing_test` 
+- CTest 中 `connection_framing_test` 通过
 
 ### T011：优雅停止集成测试
 
