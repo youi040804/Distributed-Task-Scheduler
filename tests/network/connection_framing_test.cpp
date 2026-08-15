@@ -53,8 +53,11 @@ void testFragmentedMessageAndLargePayload(){
 
     std::thread sender([&](){
         assert(sendAll(fds[0],raw.substr(0,splitPosition)));
+
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
+
         assert(sendAll(fds[0],raw.substr(splitPosition)));
+
         ::close(fds[0]);
     });
 

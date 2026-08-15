@@ -36,6 +36,8 @@ private:
     std::mutex task_mutex_;
     //条件变量，用于生产者-消费者模型
     std::condition_variable task_cv_;
+    std::mutex heartbeat_mutex_;
+    std::condition_variable heartbeat_cv_;
 
 
 public:

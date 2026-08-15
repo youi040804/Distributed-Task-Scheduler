@@ -344,4 +344,35 @@ ctest --output-on-failure
 - 超过旧固定缓冲区上限的消息可以完整接收；
 - 两条粘连消息可以按原始顺序被分别读取；
 - 接收端只根据协议 `length` 读取当前消息的 data 部分；
-- CTest 中 `connection_framing_test` 通过。
+- CTest 中 `connection_framing_test` 
+
+### T011：优雅停止集成测试
+
+**测试目标**
+
+验证 Master 和 Worker 的心跳线程在收到停止请求后能够被立即唤醒并退出，而不需要等待完整的心跳间隔结束。
+
+**前置条件**
+
+- Master 监听本机端口 `8085`；
+- 创建并启动一个 Worker；
+- Worker 心跳间隔为 `3` 秒；
+- Master 心跳检测间隔为 `3` 秒；
+- 心跳线程通过 `condition_variable::wait_for` 等待，并由 `stop()` 调用 `notify_all()` 唤醒。
+
+**测试步骤**
+
+1. 启动 Master，并在后台线程运行主循环；
+2. 启动 Worker，使其连接到 Master 并进入心跳等待状态；
+3. 等待短暂时间，确保 Worker 心跳线程已经开始等待；
+4. 记录调用 `worker.stop()` 前后的时间；
+5. 记录调用 `master.stop()` 前后的时间；
+6. 回收 Master 主线程；
+7. 验证 Worker 和 Master 的停止耗时均小于 `1` 秒。
+
+**预期结果**
+
+- `Worker::stop()` 能立即唤醒心跳线程并完成线程回收；
+- `Master::stop()` 能立即唤醒心跳检测线程并完成线程回收；
+- 两者停止耗时均小于 `1` 秒；
+- CTest 中 `graceful_stop_test` 通过。

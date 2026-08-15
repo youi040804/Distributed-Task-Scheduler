@@ -114,7 +114,16 @@ namespace dts{
             msg.data=Protocol::serializeHeartbeatInfo(info);
             
             sendToMaster(msg);// ← 先发
-            std::this_thread::sleep_for(std::chrono::seconds(HEARTBEAT_INTERVAL));// ← 再睡
+            
+            std::unique_lock<std::mutex>lock(heartbeat_mutex_);
+            heartbeat_cv_.wait_for(
+                lock,
+                std::chrono::seconds(HEARTBEAT_INTERVAL),
+                [this](){
+                    return !running_;
+                }
+            );
+            
         }
     }
     
@@ -189,6 +198,7 @@ namespace dts{
     void Worker::stop(){
         std::cout << "[Worker] stopping..." << std::endl;
         running_=false;
+        heartbeat_cv_.notify_all();
         //关闭连接，让recv退出
         if(worker_client_){
             Connection*conn=worker_client_->getConnection();

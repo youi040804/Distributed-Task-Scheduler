@@ -6,6 +6,8 @@
 #include<thread>
 #include<atomic>
 #include<memory>
+#include<condition_variable>
+#include<mutex>
 #include"network/TCPServer.h"
 #include"common/WorkerInfo.h"
 #include "WorkerManager.h"
@@ -34,7 +36,9 @@ private:
 
     std::atomic<int>next_id_{1};//Task ID生成器
 
-
+    std::mutex heartbeat_mutex_;
+    std::condition_variable heartbeat_cv_;
+    
 public:
     Master(int master_port);
     ~Master();

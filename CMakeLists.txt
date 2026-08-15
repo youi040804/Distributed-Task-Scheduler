@@ -176,7 +176,13 @@ add_executable(connection_framing_test
 target_link_libraries(connection_framing_test
     dts_core
 )
+add_executable(graceful_stop_test
+    tests/integration/graceful_stop_test.cpp
+)
 
+target_link_libraries(graceful_stop_test
+    dts_core
+)
 # ========================
 # CTest registration
 # ========================
@@ -234,4 +240,15 @@ add_test(
     COMMAND connection_framing_test
 )
 set_tests_properties(connection_framing_test PROPERTIES TIMEOUT 5)
+
+target_link_libraries(graceful_stop_test
+    dts_core
+)
+
+add_test(
+    NAME graceful_stop_test
+    COMMAND graceful_stop_test
+)
+
+set_tests_properties(graceful_stop_test PROPERTIES TIMEOUT 5)
 

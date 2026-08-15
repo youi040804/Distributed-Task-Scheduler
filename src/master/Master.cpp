@@ -93,12 +93,25 @@ namespace dts{
     }
 
     void Master::heartbeatLoop() {
+        std::unique_lock<std::mutex>lock(heartbeat_mutex_);
         while (running_) {
-            std::this_thread::sleep_for(std::chrono::seconds(HEARTBEAT_CHECK_INTERVAL));
+            const bool stopRequested=heartbeat_cv_.wait_for(
+                lock,
+                std::chrono::seconds(HEARTBEAT_CHECK_INTERVAL),
+                [this](){
+                    return !running_;
+                }
+            );
+            
+            if(stopRequested){
+                break;
+            }
+            lock.unlock();
             auto timeoutList = worker_manager_.getTimeoutWorker();
             for (int id : timeoutList) {
                 worker_manager_.markWorkerDead(id);
             }
+            lock.lock();
         }
     }
 
@@ -154,6 +167,7 @@ namespace dts{
 
     void Master::stop(){
         running_=false;
+        heartbeat_cv_.notify_all();
         //关闭监听socket，唤醒阻塞在accept()的Master主线程
         if(master_server_){
             master_server_->stop();
