@@ -376,3 +376,37 @@ ctest --output-on-failure
 - `Master::stop()` 能立即唤醒心跳检测线程并完成线程回收；
 - 两者停止耗时均小于 `1` 秒；
 - CTest 中 `graceful_stop_test` 通过。
+
+### T012：Worker 超时后的任务恢复测试
+
+**测试目标**
+
+验证 Worker 在执行任务期间心跳超时后，Master 能够将该 Worker 负责的运行中任务重新入队，并调度给其他存活 Worker 执行。
+
+**前置条件**
+
+- 启动一个 Master；
+- 启动 Worker 1 与 Worker 2；
+- Worker 心跳超时阈值为 `10` 秒；
+- 调度策略为最小负载优先；
+- 任务状态为 `RUNNING` 时记录其 `assigned_worker`。
+
+**测试步骤**
+
+1. 启动 Master、Worker 1 和 Worker 2；
+2. 等待两个 Worker 均完成注册；
+3. Client 提交一个正常任务；
+4. 验证任务首先被调度给 Worker 1；
+5. 停止 Worker 1，模拟其在任务执行期间失联；
+6. 等待 Master 检测到 Worker 1 心跳超时；
+7. 验证 Master 将该任务解除 Worker 绑定、改回 `PENDING` 并重新入队；
+8. 验证 Scheduler 将任务重新分配给存活的 Worker 2；
+9. 验证 Worker 2 完成任务，最终状态为 `DONE`。
+
+**预期结果**
+
+- 超时 Worker 被标记为死亡，不再参与后续调度；
+- 分配给该 Worker 的 `RUNNING` 任务不会永久停留在运行状态；
+- 任务会重新进入优先级队列并被存活 Worker 接手；
+- 最终任务状态为 `DONE`，且 `assigned_worker` 被清除；
+- CTest 中 `worker_timeout_recovery_e2e_test` 通过。
