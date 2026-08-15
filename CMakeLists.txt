@@ -169,6 +169,14 @@ add_executable(scheduler_failure_test
 target_link_libraries(scheduler_failure_test
     dts_core
 )
+add_executable(connection_framing_test
+    tests/network/connection_framing_test.cpp
+)
+
+target_link_libraries(connection_framing_test
+    dts_core
+)
+
 # ========================
 # CTest registration
 # ========================
@@ -220,3 +228,10 @@ add_test(
     NAME scheduler_failure_test
     COMMAND scheduler_failure_test
 )
+
+add_test(
+    NAME connection_framing_test
+    COMMAND connection_framing_test
+)
+set_tests_properties(connection_framing_test PROPERTIES TIMEOUT 5)
+

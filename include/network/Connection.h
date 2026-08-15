@@ -13,6 +13,9 @@ class Connection{
 private:
     int fd_;
     sockaddr_in peer_addr_;
+    //辅助函数-读满指定字节数
+    bool recvExact(char*buffer,size_t length);
+
 public:
 
     explicit Connection(int fd ,sockaddr_in addr);
