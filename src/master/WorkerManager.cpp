@@ -76,6 +76,10 @@ namespace dts
             std::cout<<"worker not exist!"<<std::endl;
             return false;
         }
+        //已死亡则不重复处理
+        if(!it->second.info.isAlive()){
+            return false;
+        }
         it->second.info.markDead();
         return true;
     }

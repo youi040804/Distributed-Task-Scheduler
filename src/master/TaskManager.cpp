@@ -27,6 +27,21 @@ namespace dts{
         std::lock_guard<std::mutex> lock(task_mutex_);
         pushBackTaskUnsafe(task);  // 加锁后调用无锁版本
     }
+    size_t TaskManager::recoverTasksForWorker(int workerId){
+        std::lock_guard<std::mutex>lock(task_mutex_);
+
+        size_t recoveredCount=0;
+        for(const auto&[taskId,task]:tasks_){
+            if(task->getTaskStatus()!=TaskStatus::RUNNING
+            ||task->getAssignedWorker()!=workerId){
+                continue;
+            }
+            
+            pushBackTaskUnsafe(task);
+            ++recoveredCount;
+        }
+        return recoveredCount;
+    }
 
     std::optional<std::shared_ptr<Task>> TaskManager::getTask(int task_id)const{
         std::lock_guard<std::mutex>lock(task_mutex_);

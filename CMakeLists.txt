@@ -183,6 +183,13 @@ add_executable(graceful_stop_test
 target_link_libraries(graceful_stop_test
     dts_core
 )
+add_executable(worker_timeout_recovery_e2e_test
+    tests/integration/worker_timeout_recovery_e2e_test.cpp
+)
+
+target_link_libraries(worker_timeout_recovery_e2e_test
+    dts_core
+)
 # ========================
 # CTest registration
 # ========================
@@ -209,26 +216,37 @@ add_test(
     NAME task_e2e_test
     COMMAND task_e2e_test
 )
-set_tests_properties(task_e2e_test PROPERTIES TIMEOUT 10)
-
+set_tests_properties(
+    task_e2e_test 
+    PROPERTIES TIMEOUT 10
+)
 
 add_test(
     NAME task_retry_e2e_test
     COMMAND task_retry_e2e_test
 )
-set_tests_properties(task_retry_e2e_test PROPERTIES TIMEOUT 10)
+set_tests_properties(
+    task_retry_e2e_test 
+    PROPERTIES TIMEOUT 10
+)
 
 add_test(
     NAME heartbeat_timeout_e2e_test
     COMMAND heartbeat_timeout_e2e_test
 )
-set_tests_properties(heartbeat_timeout_e2e_test PROPERTIES TIMEOUT 30)
+set_tests_properties(
+    heartbeat_timeout_e2e_test 
+    PROPERTIES TIMEOUT 30
+)
 
 add_test(
     NAME no_worker_task_e2e_test
     COMMAND no_worker_task_e2e_test
 )
-set_tests_properties(no_worker_task_e2e_test PROPERTIES TIMEOUT 10)
+set_tests_properties(
+    no_worker_task_e2e_test 
+    PROPERTIES TIMEOUT 10
+)
 
 add_test(
     NAME scheduler_failure_test
@@ -239,13 +257,26 @@ add_test(
     NAME connection_framing_test
     COMMAND connection_framing_test
 )
-set_tests_properties(connection_framing_test PROPERTIES TIMEOUT 5)
+set_tests_properties(
+    connection_framing_test 
+    PROPERTIES TIMEOUT 5
+)
 
 
 add_test(
     NAME graceful_stop_test
     COMMAND graceful_stop_test
 )
+set_tests_properties(
+    graceful_stop_test 
+    PROPERTIES TIMEOUT 5
+)
 
-set_tests_properties(graceful_stop_test PROPERTIES TIMEOUT 5)
-
+add_test(
+    NAME worker_timeout_recovery_e2e_test
+    COMMAND worker_timeout_recovery_e2e_test
+)
+set_tests_properties(
+    worker_timeout_recovery_e2e_test
+    PROPERTIES TIMEOUT 30
+)

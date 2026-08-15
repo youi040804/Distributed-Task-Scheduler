@@ -67,6 +67,10 @@ public:
     bool canTransition(TaskStatus oldStatus,TaskStatus newStatus){
         return validTransitions.count({oldStatus,newStatus})>0;
     }
+
+    // Worker 心跳超时时，恢复其仍在运行中的任务
+    // 返回实际重新入队的任务数量
+    size_t recoverTasksForWorker(int workerId);
 };
 
 

@@ -109,7 +109,14 @@ namespace dts{
             lock.unlock();
             auto timeoutList = worker_manager_.getTimeoutWorker();
             for (int id : timeoutList) {
-                worker_manager_.markWorkerDead(id);
+                if(worker_manager_.markWorkerDead(id)){
+                    const size_t recoveredCount=task_manager_.recoverTasksForWorker(id);
+                    std::cout << "[Master] Worker " << id
+                              << " timed out, recovered "
+                              << recoveredCount << " running task(s)"
+                              << std::endl;
+                }
+
             }
             lock.lock();
         }
