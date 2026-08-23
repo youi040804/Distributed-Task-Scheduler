@@ -6,6 +6,7 @@
 
 #include <netinet/in.h>
 #include<string>
+#include <mutex>
 #include "common/Message.h"
 
 namespace dts{
@@ -13,6 +14,9 @@ class Connection{
 private:
     int fd_;
     sockaddr_in peer_addr_;
+    // 保证同一个 Connection 上完整 Message 的发送不会被其他线程插入
+    std::mutex send_mutex_;
+    
     //辅助函数-读满指定字节数
     bool recvExact(char*buffer,size_t length);
 

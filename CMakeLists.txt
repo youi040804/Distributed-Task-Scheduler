@@ -39,7 +39,6 @@ include_directories(include)
 set(DTS_CORE_SRC
 
     # common
-    src/common/Message.cpp
     src/common/Protocol.cpp
     src/common/Task.cpp
     src/common/WorkerInfo.cpp
@@ -48,11 +47,6 @@ set(DTS_CORE_SRC
     src/network/Connection.cpp
     src/network/TCPClient.cpp
     src/network/TCPServer.cpp
-
-    # utils
-    src/utils/Config.cpp
-    src/utils/Logger.cpp
-    src/utils/Timer.cpp
 
     # master
     src/master/Master.cpp
@@ -186,8 +180,16 @@ target_link_libraries(graceful_stop_test
 add_executable(worker_timeout_recovery_e2e_test
     tests/integration/worker_timeout_recovery_e2e_test.cpp
 )
-
 target_link_libraries(worker_timeout_recovery_e2e_test
+    dts_core
+)
+
+
+add_executable(connection_concurrent_send_test
+    tests/network/connection_concurrent_send_test.cpp
+)
+
+target_link_libraries(connection_concurrent_send_test
     dts_core
 )
 # ========================
@@ -279,4 +281,14 @@ add_test(
 set_tests_properties(
     worker_timeout_recovery_e2e_test
     PROPERTIES TIMEOUT 30
+)
+
+add_test(
+    NAME connection_concurrent_send_test
+    COMMAND connection_concurrent_send_test
+)
+
+set_tests_properties(
+    connection_concurrent_send_test
+    PROPERTIES TIMEOUT 5
 )

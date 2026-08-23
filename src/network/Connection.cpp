@@ -20,8 +20,12 @@ namespace dts{
 
     //sendMessage调用序列化函数
     bool Connection::sendMessage(const Message&msg){
+        // 同一个 TCP Connection 可能被多个线程同时发送
+        // 必须保证一条完整 Message 发送期间不会被另一条消息插入
+        std::lock_guard<std::mutex> lock(send_mutex_);
 
-    std::string raw=Protocol::serialize(msg);
+        std::string raw=Protocol::serialize(msg);
+        
         //调用底层send函数
         return send(raw,raw.size());
     }
