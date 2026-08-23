@@ -53,9 +53,12 @@ namespace dts{
             return false;
         }
 
-        // 7. 发送成功后更新 Task,不修改 WorkerManager负载
-        task->setAssignedWorker(workerId);
-        task_manager_->updateTaskStatus(info.task_id,TaskStatus::RUNNING);// RUNNING表示任务已经被Worker接收并进入执行流程
+        // 7.TASK_ASSIGN 发送成功后，统一由 TaskManager 更新任务状态
+        if(!task_manager_->assignTask(info.task_id,workerId)){
+            std::cout << "[Scheduler] failed to update task state"<< std::endl;
+            return false;
+        }
+
         //8.打印调度信息
         std::cout << "[Scheduler] Task " << task->getTaskId()
                   << " (priority=" << task->getTaskPriority() << ")"

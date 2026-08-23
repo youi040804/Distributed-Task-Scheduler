@@ -14,6 +14,18 @@
 #include"common/Protocol.h"
 
 namespace dts{
+enum class ProcessResultCode {
+    SUCCESS,
+    RETRY,
+    FINAL_FAILED,
+    NOT_FOUND,
+    INVALID_TRANSITION
+};
+struct ProcessTaskResult {
+    ProcessResultCode code;
+    int worker_id = -1;
+};
+
 class TaskManager{
 
 public:
@@ -39,10 +51,14 @@ public:
     void pushBackTask(std::shared_ptr<Task> task);
     
     std::optional<std::shared_ptr<Task>> getTask(int task_id)const;
+    
     //通用状态修改器—— 用于"分配任务"等只需要改状态的场景
     bool updateTaskStatus(int task_id,TaskStatus newStatus);
-    // 新增 —— 专门用于"任务完成"场景
-    std::optional<int> processTaskResult(int task_id, const std::string& result_data,const TaskStatus&status);
+    // Scheduler 分配任务成功后统一修改 assigned_worker 和状态
+    bool assignTask(int task_id, int worker_id);
+
+    // 专门用于"任务完成"场景
+    ProcessTaskResult  processTaskResult(int task_id, const std::string& result_data,const TaskStatus&status);
 
 
     bool removeTask(int task_id);

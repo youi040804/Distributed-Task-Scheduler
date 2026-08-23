@@ -128,28 +128,40 @@ namespace dts{
     }
     
     // 生产者线程（receiveTaskLoop）
-    void  Worker::receiveTaskLoop(){
-        while (running_){
-            Message msg=recvTaskAssign();
-            if(msg.header.type!=MessageType::TASK_ASSIGN){
-                continue; //一次异常消息不应该杀死Worker接收线程
+    void Worker::receiveTaskLoop(){
+        while(running_){
+
+            Message msg = recvTaskAssign();
+
+            // Connection 断开或读取失败
+            if(msg.header.type == MessageType::UNKNOWN && msg.data.empty()){
+                std::cout<< "[Worker] Master connection closed"<< std::endl;
+
+                running_ = false;
+
+                // 唤醒可能正在等待的其它线程
+                task_cv_.notify_all();
+                heartbeat_cv_.notify_all();
+
+                break;
             }
-            //将msg的data反序列化成TaskAssignInfo
-            TaskAssignInfo taskinfo=Protocol::deserializeTaskAssignInfo(msg.data);
-            //保存至task队列
-            //加锁
+
+            // 非 TASK_ASSIGN 消息直接忽略
+            if(msg.header.type != MessageType::TASK_ASSIGN){
+                continue;
+            }
+
+            TaskAssignInfo taskinfo =Protocol::deserializeTaskAssignInfo(msg.data);
+
             {
-                std::lock_guard<std::mutex>lock(task_mutex_);
+                std::lock_guard<std::mutex> lock(task_mutex_);
                 task_queue_.push(taskinfo);
             }
 
-                queued_task_count_++; // ← atomic 操作，不需要锁
-                //唤醒任务执行线程
-                task_cv_.notify_one();
+            queued_task_count_++;
+            task_cv_.notify_one();
         }
-        
     }
-    
     // 消费者线程
     void  Worker::executeTaskLoop(){
         while (running_){

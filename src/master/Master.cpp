@@ -132,24 +132,36 @@ namespace dts{
         task_manager_.addTask(std::move(task));
     }
 
-    bool Master::handleTaskResult(const TaskResultInfo&info){
-        //先假设所有任务的返回结果都是成功的
+    bool Master::handleTaskResult(const TaskResultInfo& info){
         //Master不负责更改任务状态，交由TaskManager来更新任务状态
-        //只处理 Task 状态，不修改 Worker 负载
-        auto worker_id=task_manager_.processTaskResult(info.task_id,info.payload,info.status);
-        
-        if(!worker_id.has_value())
-        {
-            std::cout<<"task process failed"<<std::endl;
-            return false;
+        auto result = task_manager_.processTaskResult(info.task_id,info.payload,info.status);
+
+        switch(result.code){
+
+            case ProcessResultCode::SUCCESS:{
+                std::cout << "[Master] Task "<< info.task_id<< " completed successfully"<< std::endl;
+                return true;
+            }
+            case ProcessResultCode::RETRY:{
+                std::cout << "[Master] Task "<< info.task_id<< " failed, retry scheduled"<< std::endl;
+                return true;
+            }
+            case ProcessResultCode::FINAL_FAILED:{
+                std::cout << "[Master] Task "<< info.task_id<< " failed permanently"<< std::endl;
+                return true;
+            }
+            case ProcessResultCode::NOT_FOUND:{
+                std::cout << "[Master] Task "<< info.task_id<< " not found"<< std::endl;
+                return false;
+            }
+            case ProcessResultCode::INVALID_TRANSITION:{
+                std::cout << "[Master] Task "<< info.task_id<< " invalid status transition"<< std::endl;
+                return false;
+            }
         }
-
-        // 不修改 WorkerManager 的负载
-        // 等待下一次 Heartbeat 来同步真实负载
-        return true;
-
+        // 不修改 WorkerManager 的负载,等待下一次 Heartbeat 来同步真实负载
+        return false;
     }
-
 
     void Master::schedulerLoop(){
         while(running_){

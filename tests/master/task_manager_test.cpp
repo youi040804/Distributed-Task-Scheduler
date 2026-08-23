@@ -51,9 +51,9 @@ void testTaskSuccessResult(){
     assert(task.has_value());
     (*task)->setAssignedWorker(7);
 
-    auto workerId=manager.processTaskResult(1,"success",TaskStatus::DONE);
-    assert(workerId.has_value());
-    assert(*workerId==7);
+    auto result = manager.processTaskResult(1,"success",TaskStatus::DONE);
+    assert(result.code == ProcessResultCode::SUCCESS);
+    assert(result.worker_id == 7);
 
     task=manager.getTask(1);
     assert((*task)->getTaskStatus()==TaskStatus::DONE);
@@ -68,38 +68,49 @@ void testTaskRetryLimit() {
     TaskManager manager;
     manager.addTask(Task(1, 1, "task"));
 
-    // 失败后应重新调度 MAX_TASK_RETRY 次
-    for(int retry=1;retry<=MAX_TASK_RETRY;++retry){
-        auto task=manager.getHighestPriorityTask();
-        assert(task!=nullptr);
+    // 前 MAX_TASK_RETRY 次失败，都应该重新调度
+    for(int retry = 1; retry <= MAX_TASK_RETRY; ++retry){
+        auto task = manager.getHighestPriorityTask();
+        assert(task != nullptr);
 
         assert(manager.updateTaskStatus(1,TaskStatus::RUNNING));
-        auto result=manager.processTaskResult(1,"Failed",TaskStatus::FAILED);
 
-        assert(!result.has_value());
+        auto result = manager.processTaskResult(1,"Failed",TaskStatus::FAILED);
 
-        auto stored=manager.getTask(1);
+        // RETRY
+        assert(result.code == ProcessResultCode::RETRY);
+
+        auto stored = manager.getTask(1);
         assert(stored.has_value());
-        assert((*stored)->getRetryCount()==retry);
-        assert((*stored)->getTaskStatus()==TaskStatus::PENDING);
+
+        assert((*stored)->getRetryCount() == retry);
+        assert((*stored)->getTaskStatus() == TaskStatus::PENDING);
     }
-    // 第 MAX_TASK_RETRY + 1 次失败，任务最终 FAILED
-    auto task=manager.getHighestPriorityTask();
-    assert(task!=nullptr);
-    assert(manager.updateTaskStatus(1,TaskStatus::RUNNING));;
 
-    auto result =manager.processTaskResult(1, "failed", TaskStatus::FAILED);
+    // 第 MAX_TASK_RETRY + 1 次失败，最终 FAILED
+    auto task = manager.getHighestPriorityTask();
+    assert(task != nullptr);
 
-    assert(!result.has_value());
+    assert(manager.updateTaskStatus(1,TaskStatus::RUNNING));
 
-    auto stored=manager.getTask(1);
+    auto result = manager.processTaskResult(1,"failed",TaskStatus::FAILED);
+
+    // FINAL_FAILED
+    assert(result.code ==ProcessResultCode::FINAL_FAILED);
+
+    auto stored = manager.getTask(1);
+
     assert(stored.has_value());
-    assert((*stored)->getTaskStatus()==TaskStatus::FAILED);
-    assert((*stored)->getAssignedWorker()==-1);
+
+    assert((*stored)->getTaskStatus() ==TaskStatus::FAILED);
+
+    assert((*stored)->getAssignedWorker() == -1);
+
     assert(!manager.hasPendingTask());
 
-    std::cout << "✅ 任务失败后最多重试 "<< MAX_TASK_RETRY<< " 次，超出后最终失败" << std::endl;
+    std::cout<< "✅ 任务失败后最多重试 "<< MAX_TASK_RETRY<< " 次，超出后最终失败"<< std::endl;
 }
+
 int main() {
     std::cout << "========================================" << std::endl;
     std::cout << "  TaskManager 单元测试" << std::endl;

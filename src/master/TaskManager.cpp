@@ -5,6 +5,7 @@
 #include"master/TaskManager.h"
 #include"common/Message.h"
 #include"utils/Config.h"
+
 namespace dts{
 
     void TaskManager::addTask(Task task){
@@ -66,42 +67,75 @@ namespace dts{
         return true;
     }
 
-     std::optional<int> TaskManager::processTaskResult(int task_id, const std::string& result_data,const TaskStatus&status){
-        std::lock_guard<std::mutex>lock(task_mutex_);
-        auto it =tasks_.find(task_id);
-        if(it==tasks_.end()){
-            return std::nullopt;
+    bool TaskManager::assignTask(int task_id, int worker_id){
+
+        std::lock_guard<std::mutex> lock(task_mutex_);
+
+        auto it = tasks_.find(task_id);
+
+        if(it == tasks_.end()){
+            return false;
         }
-        auto task=it->second;
-        TaskStatus oldStatus=task->getTaskStatus();
-        if(!canTransition(oldStatus,status)){
-            return std::nullopt;
+
+        auto task = it->second;
+
+        // 当前只允许 PENDING -> RUNNING
+        if(!canTransition(task->getTaskStatus(),TaskStatus::RUNNING)){
+            return false;
         }
-        
-        if(status==TaskStatus::FAILED){
+
+        task->setAssignedWorker(worker_id);
+        task->setStatus(TaskStatus::RUNNING);
+
+        return true;
+    }
+
+   ProcessTaskResult TaskManager::processTaskResult(int task_id,const std::string& result_data,const TaskStatus& status){
+        std::lock_guard<std::mutex> lock(task_mutex_);
+
+        auto it = tasks_.find(task_id);
+
+        if(it == tasks_.end()){
+            return {ProcessResultCode::NOT_FOUND, -1};
+        }
+
+        auto task = it->second;
+        TaskStatus oldStatus = task->getTaskStatus();
+
+        if(!canTransition(oldStatus, status)){
+            return {ProcessResultCode::INVALID_TRANSITION, -1};
+        }
+
+        int workerId = task->getAssignedWorker();
+
+        if(status == TaskStatus::FAILED){
+
             task->increaseRetryCount();
 
-            if(task->getRetryCount()<=MAX_TASK_RETRY){
-                // 还有重试次数，重新调度
+            if(task->getRetryCount() <= MAX_TASK_RETRY){
+                // 还有重试次数，重新进入待调度队列
                 pushBackTaskUnsafe(task);
-                return std::nullopt; //重试时返回空，表示没有 worker
+
+                return {ProcessResultCode::RETRY,workerId};
+
             }else{
-                // 重试次数用完，最终失败
+                // 重试次数耗尽，最终失败
                 task->setStatus(TaskStatus::FAILED);
-                task->setAssignedWorker(-1);  //清除 assigned_worker
-                return std::nullopt;  //最终失败也返回空
+                task->setAssignedWorker(-1);
+
+                return {ProcessResultCode::FINAL_FAILED,workerId};
             }
-        }else{
-            task->setStatus(status);
         }
-        int workerId=task->getAssignedWorker();
-        task->setAssignedWorker(-1);//成功后清除，准备下一个任务
-        return workerId;
-        // result_data是任务的"输出"——Worker 执行完任务的最终产物
-        // processTaskResult 把它存到 Task 对象里
-        // 后续有需要的话可以使用，目前暂时不实现
+
+        // 正常成功完成
+        task->setStatus(status);
+        task->setAssignedWorker(-1);
+
+        return {ProcessResultCode::SUCCESS,workerId};
     }
     
+
+
     bool TaskManager::removeTask(int task_id){
        //暂时返回false，后期再实现具体逻辑
 
