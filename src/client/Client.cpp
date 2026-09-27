@@ -42,15 +42,47 @@ namespace dts{
         return conn->sendMessage(msg);
     }
 
-    bool Client::submitTask(const TaskSubmitInfo& info){
+    std::optional<int> Client::submitTask(const TaskSubmitInfo& info){
         Message msg;
-        msg.header.type=MessageType::SUBMIT_TASK;
-        msg.data=Protocol::serializeTaskSubmitInfo(info);
-        if(!sendToMaster(msg)){
-            std::cout<<"task submit failed!"<<std::endl;
-            return false;
+        msg.header.type = MessageType::SUBMIT_TASK;
+        msg.data =Protocol::serializeTaskSubmitInfo(info);
+
+        // 1. 向 Master 提交任务
+        if (!sendToMaster(msg)) {
+            std::cout<< "task submit failed!"<< std::endl;
+
+            return std::nullopt;
         }
-        return true;
+
+        // 2. 等待 Master 返回 TASK_SUBMIT_ACK
+        if (!client_) {
+            return std::nullopt;
+        }
+
+        Connection* conn =client_->getConnection();
+
+        if (!conn) {
+            return std::nullopt;
+        }
+
+        Message response =conn->receiveMessage();
+
+        // 3. 校验响应类型
+        if (response.header.type !=
+            MessageType::TASK_SUBMIT_ACK) {
+
+            std::cerr
+                << "unexpected response type: "
+                << Protocol::messageTypeToString(response.header.type)
+                << std::endl;
+
+            return std::nullopt;
+        }
+
+        // 4. 解析 ACK，获得 Master 分配的 task_id
+        TaskSubmitAckInfo ack =Protocol::deserializeTaskSubmitAckInfo(response.data);
+
+        return ack.task_id;
     }
     void Client::stop(){
         if(!client_){

@@ -133,20 +133,21 @@ int main(int argc, char* argv[]) {
     task.priority = priority;
     task.payload = payload;
 
-    if (!client.submitTask(task)) {
-        std::cerr
-            << "Failed to submit task\n";
+
+    auto task_id =client.submitTask(task);
+
+    if (!task_id.has_value()) {
+        std::cerr<< "Failed to submit task\n";
 
         client.stop();
         return EXIT_FAILURE;
     }
 
     std::cout
-        << "[Client] task submitted"
-        << " (task id acknowledgement "
-        << "is not implemented yet)"
+        << "[Client] task submitted successfully"
+        << ", task_id="
+        << *task_id
         << std::endl;
-
     client.stop();
 
     return EXIT_SUCCESS;

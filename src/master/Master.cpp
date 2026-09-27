@@ -52,11 +52,31 @@ namespace dts{
                     handleHeartbeat(info);
                     break;
                 }
+
                 case MessageType::SUBMIT_TASK: {
-                    TaskSubmitInfo info = Protocol::deserializeTaskSubmitInfo(msg.data);
-                    handleTaskSubmit(info);
+                    TaskSubmitInfo info =Protocol::deserializeTaskSubmitInfo(msg.data);
+
+                    const int task_id =handleTaskSubmit(info);
+
+                    TaskSubmitAckInfo ack_info;
+                    ack_info.task_id = task_id;
+
+                    Message ack_msg;
+                    ack_msg.header.type =MessageType::TASK_SUBMIT_ACK;
+
+                    ack_msg.data =Protocol::serializeTaskSubmitAckInfo(ack_info);
+
+                    if (!conn->sendMessage(ack_msg)) {
+                        std::cerr
+                            << "[Master] Failed to send "
+                            << "TASK_SUBMIT_ACK for Task "
+                            << task_id
+                            << std::endl;
+                    }
+
                     break;
                 }
+
                 case MessageType::TASK_RESULT: {
                     TaskResultInfo info = Protocol::deserializeTaskResultInfo(msg.data);
                     handleTaskResult(info);
@@ -122,14 +142,15 @@ namespace dts{
         }
     }
 
-    void Master::handleTaskSubmit(const TaskSubmitInfo&info){
-        // TODO: 当前是单向通知，Client无法获知task_id
-        // 后续需要改为请求-响应模型，返回任务ID
-        //1.创建Task
-        int id=next_id_.fetch_add(1);//原子递增
+
+    int Master::handleTaskSubmit(const TaskSubmitInfo& info){
+        int id = next_id_.fetch_add(1);
+
         Task task(id,info.priority,info.payload);
-        //2.将Task保存到taskmanager里
+
         task_manager_.addTask(std::move(task));
+
+        return id;
     }
 
     bool Master::handleTaskResult(const TaskResultInfo& info){

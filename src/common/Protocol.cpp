@@ -75,6 +75,20 @@ namespace dts{
         parser>>task_submit_info.payload;
         return task_submit_info;
     }
+    // 辅助函数：TaskSubmitAckInfo--string
+    std::string Protocol::serializeTaskSubmitAckInfo(const TaskSubmitAckInfo& info){
+        MessageBuilder builder;
+        builder << info.task_id;
+        return builder.str();
+    }
+    TaskSubmitAckInfo Protocol::deserializeTaskSubmitAckInfo(const std::string& data){
+        MessageParser parser(data);
+
+        TaskSubmitAckInfo ack_info;
+        parser >> ack_info.task_id;
+
+        return ack_info;
+    }
 
     //辅助函数：TaskAssignInfo--string
     std::string Protocol::serializeTaskAssignInfo(const TaskAssignInfo&info){
@@ -114,6 +128,8 @@ namespace dts{
         switch(type){
             case dts::MessageType::SUBMIT_TASK:
                 return "SUBMIT_TASK";
+            case dts::MessageType::TASK_SUBMIT_ACK:
+                return "TASK_SUBMIT_ACK";
             case dts::MessageType::REGISTER_WORKER:
                 return "REGISTER_WORKER";
             case dts::MessageType::TASK_ASSIGN:
@@ -130,7 +146,9 @@ namespace dts{
     MessageType Protocol::stringToMessageType(const std::string&type){
         if (type == "SUBMIT_TASK") {
             return MessageType::SUBMIT_TASK;
-        } else if (type == "REGISTER_WORKER") {
+        }else if (type == "TASK_SUBMIT_ACK") {
+            return MessageType::TASK_SUBMIT_ACK;
+        }else if (type == "REGISTER_WORKER") {
             return MessageType::REGISTER_WORKER;
         } else if (type == "TASK_ASSIGN") {
             return MessageType::TASK_ASSIGN;

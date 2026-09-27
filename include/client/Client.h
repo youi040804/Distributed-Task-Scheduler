@@ -3,6 +3,7 @@
 */
 #pragma once
 #include<memory>
+#include <optional>
 #include"network/TCPClient.h"
 #include "common/Message.h"  
 #include"common/Protocol.h"
@@ -21,8 +22,7 @@ public:
 
     bool sendToMaster(const Message& msg); 
   
-    bool submitTask(const TaskSubmitInfo& info);
-
+    std::optional<int> submitTask(const TaskSubmitInfo& info);
     void stop();
 
 };
