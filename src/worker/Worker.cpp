@@ -158,8 +158,8 @@ namespace dts{
                 task_queue_.push(taskinfo);
             }
 
-            queued_task_count_++;
-            task_cv_.notify_one();
+            queued_task_count_++;//原子变量，锁外执行加1操作
+            task_cv_.notify_one();//唤醒执行线程
         }
     }
     // 消费者线程

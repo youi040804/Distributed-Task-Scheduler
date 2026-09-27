@@ -67,6 +67,17 @@ add_library(dts_core STATIC
     ${DTS_CORE_SRC}
 )
 
+# =========================
+# Applications
+# =========================
+
+add_executable(dts_master
+    apps/master_main.cpp
+)
+
+target_link_libraries(dts_master
+    dts_core
+)
 
 # =========================
 # Tests
