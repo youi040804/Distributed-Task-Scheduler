@@ -31,6 +31,9 @@ struct TaskSubmitInfo{
     int priority=0;
     std::string payload="";
 };
+struct TaskSubmitAckInfo {
+    int task_id = 0;
+};
 struct TaskAssignInfo{
     int task_id=0;
     std::string payload="";
@@ -62,6 +65,10 @@ public:
     static std::string serializeTaskSubmitInfo(const TaskSubmitInfo&info);
     static TaskSubmitInfo deserializeTaskSubmitInfo(const std::string&data);
 
+    // 辅助函数：TaskSubmitAckInfo--string
+    static std::string serializeTaskSubmitAckInfo(const TaskSubmitAckInfo& info);
+    static TaskSubmitAckInfo deserializeTaskSubmitAckInfo(const std::string& data);
+    
     //辅助函数：TaskAssignInfo--string
     static std::string serializeTaskAssignInfo(const TaskAssignInfo&info);
     static TaskAssignInfo deserializeTaskAssignInfo(const std::string&data);

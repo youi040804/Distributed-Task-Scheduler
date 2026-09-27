@@ -8,9 +8,12 @@
 namespace dts{
 enum class MessageType:uint16_t 
 {
+
     // Client → Master
     SUBMIT_TASK = 1,
-    
+
+    // Master → Client
+    TASK_SUBMIT_ACK = 2,
     // Worker → Master
     REGISTER_WORKER = 10,
     HEARTBEAT = 11,

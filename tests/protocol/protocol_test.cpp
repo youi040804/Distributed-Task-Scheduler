@@ -38,6 +38,42 @@ void testMessageSerializeDeserialize() {
     std::cout << std::endl;
 }
 
+void testTaskSubmitAckInfo() {
+    std::cout<< "=== Test 5: TaskSubmitAckInfo 序列化/反序列化 ==="<< std::endl;
+
+    // 1. 构造 ACK 业务数据
+    TaskSubmitAckInfo original;
+    original.task_id = 123;
+
+    // 2. ACK 业务数据 → string
+    std::string data =Protocol::serializeTaskSubmitAckInfo(original);
+
+    assert(data == "123");
+
+    // 3. string → ACK 业务数据
+    TaskSubmitAckInfo parsed = Protocol::deserializeTaskSubmitAckInfo(data);
+
+    assert(parsed.task_id == 123);
+
+    // 4. 再验证完整 Message 闭环
+    Message msg;
+    msg.header.type = MessageType::TASK_SUBMIT_ACK;
+    msg.data = data;
+
+    std::string raw = Protocol::serialize(msg);
+    Message received = Protocol::deserialize(raw);
+
+    assert(received.header.type ==MessageType::TASK_SUBMIT_ACK);
+
+    TaskSubmitAckInfo received_ack = Protocol::deserializeTaskSubmitAckInfo(received.data);
+
+    assert(received_ack.task_id == 123);
+
+    std::cout<< "✅ TaskSubmitAckInfo 测试通过!"<< std::endl;
+    std::cout<< "   Task ID: "<< received_ack.task_id<< std::endl;
+    std::cout << std::endl;
+}
+
 void testWorkerRegisterInfo() {
     std::cout << "=== Test 2: WorkerRegisterInfo 序列化/反序列化 ===" << std::endl;
     
@@ -117,15 +153,18 @@ void testEnumToString() {
     std::cout << "=== Test 4: 枚举转字符串 ===" << std::endl;
     
     assert(Protocol::messageTypeToString(MessageType::SUBMIT_TASK) == "SUBMIT_TASK");
+    assert(Protocol::messageTypeToString(MessageType::TASK_SUBMIT_ACK) == "TASK_SUBMIT_ACK");
     assert(Protocol::messageTypeToString(MessageType::REGISTER_WORKER) == "REGISTER_WORKER");
     assert(Protocol::messageTypeToString(MessageType::HEARTBEAT) == "HEARTBEAT");
     assert(Protocol::messageTypeToString(MessageType::TASK_RESULT) == "TASK_RESULT");
     assert(Protocol::messageTypeToString(MessageType::TASK_ASSIGN) == "TASK_ASSIGN");
-    
+
     assert(Protocol::stringToMessageType("SUBMIT_TASK") == MessageType::SUBMIT_TASK);
+    assert(Protocol::stringToMessageType("TASK_SUBMIT_ACK") == MessageType::TASK_SUBMIT_ACK);
     assert(Protocol::stringToMessageType("REGISTER_WORKER") == MessageType::REGISTER_WORKER);
     assert(Protocol::stringToMessageType("UNKNOWN") == MessageType::UNKNOWN);
     
+
     std::cout << "✅ 枚举转字符串测试通过!" << std::endl;
     std::cout << std::endl;
 }
@@ -138,6 +177,7 @@ int main() {
     
     try {
         testEnumToString();
+        testTaskSubmitAckInfo();
         testWorkerRegisterInfo();
         testMessageSerializeDeserialize();
         testFullMessageWithWorkerInfo();
