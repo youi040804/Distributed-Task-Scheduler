@@ -84,7 +84,13 @@ add_executable(dts_worker
 target_link_libraries(dts_worker
     dts_core
 )
+add_executable(dts_client
+    apps/client_main.cpp
+)
 
+target_link_libraries(dts_client
+    dts_core
+)
 # =========================
 # Tests
 # =========================
