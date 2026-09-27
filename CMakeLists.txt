@@ -7,7 +7,6 @@
 # 构建目标：
 #   1. 将 src/ 下所有核心代码编译成静态库 dts_core
 #   2. 将测试程序分别链接 dts_core
-#   3. 暂时不编译 apps/（预留入口）
 # 
 # 使用方式：
 #   mkdir build && cd build
@@ -76,6 +75,13 @@ add_executable(dts_master
 )
 
 target_link_libraries(dts_master
+    dts_core
+)
+add_executable(dts_worker
+    apps/worker_main.cpp
+)
+
+target_link_libraries(dts_worker
     dts_core
 )
 
