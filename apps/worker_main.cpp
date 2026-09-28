@@ -12,6 +12,7 @@ void printUsage(const char* program) {
         << "Usage: " << program
         << " --id <worker-id>"
         << " --master <ip:port>"
+        << " [--threads <count>]"
         << " [--worker-ip <ip>]"
         << " [--worker-port <port>]\n";
 }
@@ -54,7 +55,8 @@ int main(int argc, char* argv[]) {
 
     std::string master_ip;
     int master_port = 0;
-
+    
+    int executor_threads = 1;
     // 当前 Worker 并不会监听来自 Master 的反向连接，
     // 这里的 IP/port 主要作为注册信息保留。
     std::string worker_ip = "127.0.0.1";
@@ -92,6 +94,18 @@ int main(int argc, char* argv[]) {
                 return EXIT_FAILURE;
             }
 
+        } else if (arg == "--threads" &&
+                    i + 1 < argc) {
+
+            if (!parseInt(
+                    argv[++i],
+                    executor_threads) ||
+                executor_threads <= 0) {
+
+                std::cerr
+                    << "Invalid thread count\n";
+                return EXIT_FAILURE;
+            }
         } else if (arg == "--help" ||
                    arg == "-h") {
             printUsage(argv[0]);
@@ -124,8 +138,8 @@ int main(int argc, char* argv[]) {
         nullptr
     );
 
-    dts::Worker worker(worker_id);
-
+    dts::Worker worker(worker_id,static_cast<size_t>(executor_threads));
+    
     if (!worker.start(
             master_ip,
             master_port,
@@ -141,8 +155,10 @@ int main(int argc, char* argv[]) {
         << master_ip
         << ":"
         << master_port
+        << ", executor_threads="
+        << executor_threads
         << std::endl;
-
+    
     int signal_number = 0;
 
     sigwait(
