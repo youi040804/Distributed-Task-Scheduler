@@ -13,15 +13,19 @@
 
 
 namespace dts{
-
-    Worker::Worker(int worker_id)
-        : worker_id_(worker_id)
-        ,running_(false)
-        ,worker_client_(nullptr)
-        ,running_task_count_(0)
-        ,queued_task_count_(0)
-        ,executor_(std::make_unique<TaskExecutor>())//初始化executor_
+    Worker::Worker(int worker_id,size_t executor_thread_count)
+    : worker_id_(worker_id)
+    , running_(false)
+    , worker_client_(nullptr)
+    , running_task_count_(0)
+    , queued_task_count_(0)
+    , executor_thread_count_(executor_thread_count)
+    , executor_(std::make_unique<TaskExecutor>())
     {
+        if (executor_thread_count_ == 0) {
+            executor_thread_count_ = 1;
+        }
+
         memset(&master_addr_, 0, sizeof(master_addr_));
         master_addr_.sin_family = AF_INET;
     }
@@ -92,8 +96,11 @@ namespace dts{
         task_recv_thread_ =
             std::thread(&Worker::receiveTaskLoop,this);
         //创建任务执行线程
-        task_execute_thread_ =
-            std::thread(&Worker::executeTaskLoop,this);
+        task_execute_threads_.reserve(executor_thread_count_);
+
+        for (size_t i = 0;i < executor_thread_count_; ++i) {
+            task_execute_threads_.emplace_back(&Worker::executeTaskLoop,this);
+        }
     }
 
   
@@ -156,9 +163,10 @@ namespace dts{
             {
                 std::lock_guard<std::mutex> lock(task_mutex_);
                 task_queue_.push(taskinfo);
+                queued_task_count_++;
+
             }
 
-            queued_task_count_++;//原子变量，锁外执行加1操作
             task_cv_.notify_one();//唤醒执行线程
         }
     }
@@ -180,9 +188,10 @@ namespace dts{
             task=task_queue_.front();
   
             task_queue_.pop();
+            queued_task_count_--;
+
         }// ← 离开作用域，自动解锁
         // atomic 操作移到锁外面
-        queued_task_count_--;
         running_task_count_++;
 
         //3.调用 TaskExecutor 执行
@@ -226,8 +235,12 @@ namespace dts{
         if(heartbeat_thread_.joinable()) heartbeat_thread_.join();
 
         if(task_recv_thread_.joinable()) task_recv_thread_.join();
-
-        if(task_execute_thread_.joinable()) task_execute_thread_.join();
+        
+        for (auto& thread :task_execute_threads_) {
+            if (thread.joinable()) {
+                thread.join();
+            }
+        }
     }
 }
 

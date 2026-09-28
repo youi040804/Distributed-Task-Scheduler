@@ -10,6 +10,7 @@
 #include<queue>
 #include<thread>
 #include<mutex>
+#include<vector>
 #include <condition_variable>
 #include"network/TCPClient.h"
 #include "common/Message.h"  
@@ -29,7 +30,8 @@ private:
      
     std::thread heartbeat_thread_;
     std::thread task_recv_thread_;
-    std::thread task_execute_thread_;
+    std::vector<std::thread> task_execute_threads_;
+    size_t executor_thread_count_;
 
     std::queue<TaskAssignInfo>task_queue_;
     std::unique_ptr<TaskExecutor>executor_;
@@ -41,7 +43,7 @@ private:
 
 
 public:
-    explicit Worker(int worker_id);
+    explicit Worker(int worker_id,size_t executor_thread_count = 1);
     void setMasterAddress(const std::string& master_ip, int master_port);
     bool connectMaster();
 
