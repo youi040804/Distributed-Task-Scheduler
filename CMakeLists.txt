@@ -222,6 +222,12 @@ add_executable(query_task_test
 target_link_libraries(query_task_test
     dts_core
 )
+add_executable(worker_thread_pool_test
+    tests/integration/worker_thread_pool_test.cpp
+)
+target_link_libraries(worker_thread_pool_test
+    dts_core
+)
 # ========================
 # CTest registration
 # ========================
@@ -329,5 +335,14 @@ add_test(
 
 set_tests_properties(
     query_task_test
+    PROPERTIES TIMEOUT 10
+)
+add_test(
+    NAME worker_thread_pool_test
+    COMMAND worker_thread_pool_test
+)
+
+set_tests_properties(
+    worker_thread_pool_test
     PROPERTIES TIMEOUT 10
 )
