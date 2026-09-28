@@ -89,6 +89,45 @@ namespace dts{
 
         return ack_info;
     }
+    std::string Protocol::serializeTaskQueryInfo(const TaskQueryInfo& info){
+        MessageBuilder builder;
+        builder << info.task_id;
+        return builder.str();
+    }
+    TaskQueryInfo Protocol::deserializeTaskQueryInfo(const std::string& data) {
+        MessageParser parser(data);
+
+        TaskQueryInfo info;
+        parser >> info.task_id;
+
+        return info;
+    }
+    std::string Protocol::serializeTaskStatusInfo(const TaskStatusInfo& info) {
+        MessageBuilder builder;
+
+        builder << info.task_id
+                << info.found
+                << static_cast<int>(info.status)
+                << info.result;
+
+        return builder.str();
+    }
+
+    TaskStatusInfo Protocol::deserializeTaskStatusInfo(const std::string& data) {
+        MessageParser parser(data);
+
+        TaskStatusInfo info;
+        int status = 0;
+
+        parser >> info.task_id
+            >> info.found
+            >> status
+            >> info.result;
+
+        info.status =static_cast<TaskStatus>(status);
+
+        return info;
+    }
 
     //辅助函数：TaskAssignInfo--string
     std::string Protocol::serializeTaskAssignInfo(const TaskAssignInfo&info){
@@ -130,6 +169,10 @@ namespace dts{
                 return "SUBMIT_TASK";
             case dts::MessageType::TASK_SUBMIT_ACK:
                 return "TASK_SUBMIT_ACK";
+            case MessageType::QUERY_TASK:
+                return "QUERY_TASK";
+            case MessageType::TASK_STATUS:
+                return "TASK_STATUS";
             case dts::MessageType::REGISTER_WORKER:
                 return "REGISTER_WORKER";
             case dts::MessageType::TASK_ASSIGN:
@@ -148,6 +191,10 @@ namespace dts{
             return MessageType::SUBMIT_TASK;
         }else if (type == "TASK_SUBMIT_ACK") {
             return MessageType::TASK_SUBMIT_ACK;
+        }else if (type == "QUERY_TASK") {
+            return MessageType::QUERY_TASK;
+        }else if (type == "TASK_STATUS") {
+            return MessageType::TASK_STATUS;
         }else if (type == "REGISTER_WORKER") {
             return MessageType::REGISTER_WORKER;
         } else if (type == "TASK_ASSIGN") {

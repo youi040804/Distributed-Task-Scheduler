@@ -34,6 +34,17 @@ struct TaskSubmitInfo{
 struct TaskSubmitAckInfo {
     int task_id = 0;
 };
+struct TaskQueryInfo {
+    int task_id = 0;
+};
+
+struct TaskStatusInfo {
+    int task_id = 0;
+    bool found = false;
+    TaskStatus status = TaskStatus::PENDING;
+    std::string result = "";
+};
+
 struct TaskAssignInfo{
     int task_id=0;
     std::string payload="";
@@ -77,6 +88,12 @@ public:
     static std::string serializeTaskResultInfo(const TaskResultInfo&info);
     static TaskResultInfo deserializeTaskResultInfo(const std::string&data);
 
+    static std::string serializeTaskQueryInfo(const TaskQueryInfo& info);
+    static TaskQueryInfo deserializeTaskQueryInfo(const std::string& data);
+
+    static std::string serializeTaskStatusInfo(const TaskStatusInfo& info);
+    static TaskStatusInfo deserializeTaskStatusInfo(const std::string& data);
+   
     //辅助函数：将枚举类转为字符串
     static std::string messageTypeToString(MessageType type) ;
     //辅助函数：将字符串转为枚举类

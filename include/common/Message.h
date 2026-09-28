@@ -9,11 +9,15 @@ namespace dts{
 enum class MessageType:uint16_t 
 {
 
+
     // Client → Master
     SUBMIT_TASK = 1,
+    QUERY_TASK = 3,
 
     // Master → Client
     TASK_SUBMIT_ACK = 2,
+    TASK_STATUS = 4,
+
     // Worker → Master
     REGISTER_WORKER = 10,
     HEARTBEAT = 11,

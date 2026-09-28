@@ -73,7 +73,48 @@ void testTaskSubmitAckInfo() {
     std::cout<< "   Task ID: "<< received_ack.task_id<< std::endl;
     std::cout << std::endl;
 }
+void testTaskQueryInfo() {
+    dts::TaskQueryInfo query;
+    query.task_id = 123;
 
+    std::string data =dts::Protocol::serializeTaskQueryInfo(query);
+    dts::TaskQueryInfo decoded =dts::Protocol::deserializeTaskQueryInfo(data);
+
+    assert(decoded.task_id == 123);
+}
+
+void testTaskStatusInfo() {
+    // 情况 1：任务存在，并且已经执行完成
+    {
+        dts::TaskStatusInfo status;
+        status.task_id = 123;
+        status.found = true;
+        status.status = dts::TaskStatus::DONE;
+        status.result = "success";
+
+        std::string data =dts::Protocol::serializeTaskStatusInfo(status);
+        dts::TaskStatusInfo decoded =dts::Protocol::deserializeTaskStatusInfo(data);
+
+        assert(decoded.task_id == 123);
+        assert(decoded.found);
+        assert(decoded.status == dts::TaskStatus::DONE);
+        assert(decoded.result == "success");
+    }
+
+    // 情况 2：查询的任务不存在
+    {
+        dts::TaskStatusInfo status;
+        status.task_id = 999;
+        status.found = false;
+
+        std::string data =dts::Protocol::serializeTaskStatusInfo(status);
+
+        dts::TaskStatusInfo decoded =dts::Protocol::deserializeTaskStatusInfo(data);
+
+        assert(decoded.task_id == 999);
+        assert(!decoded.found);
+    }
+}
 void testWorkerRegisterInfo() {
     std::cout << "=== Test 2: WorkerRegisterInfo 序列化/反序列化 ===" << std::endl;
     
@@ -158,11 +199,16 @@ void testEnumToString() {
     assert(Protocol::messageTypeToString(MessageType::HEARTBEAT) == "HEARTBEAT");
     assert(Protocol::messageTypeToString(MessageType::TASK_RESULT) == "TASK_RESULT");
     assert(Protocol::messageTypeToString(MessageType::TASK_ASSIGN) == "TASK_ASSIGN");
+    assert(Protocol::messageTypeToString(MessageType::QUERY_TASK) == "QUERY_TASK");
+    assert(Protocol::messageTypeToString(MessageType::TASK_STATUS) == "TASK_STATUS");
+
 
     assert(Protocol::stringToMessageType("SUBMIT_TASK") == MessageType::SUBMIT_TASK);
     assert(Protocol::stringToMessageType("TASK_SUBMIT_ACK") == MessageType::TASK_SUBMIT_ACK);
     assert(Protocol::stringToMessageType("REGISTER_WORKER") == MessageType::REGISTER_WORKER);
     assert(Protocol::stringToMessageType("UNKNOWN") == MessageType::UNKNOWN);
+    assert(Protocol::stringToMessageType("TASK_STATUS")== MessageType::TASK_STATUS);
+    assert(Protocol::stringToMessageType("QUERY_TASK") == MessageType::QUERY_TASK);
     
 
     std::cout << "✅ 枚举转字符串测试通过!" << std::endl;
@@ -181,6 +227,8 @@ int main() {
         testWorkerRegisterInfo();
         testMessageSerializeDeserialize();
         testFullMessageWithWorkerInfo();
+        testTaskQueryInfo();
+        testTaskStatusInfo();
         
         std::cout << "========================================" << std::endl;
         std::cout << "  ✅ 所有测试通过！" << std::endl;
