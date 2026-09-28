@@ -8,12 +8,18 @@ namespace {
 
 void printUsage(const char* program) {
     std::cout
-        << "Usage: " << program
+        << "Usage:\n"
+        << "  Submit task:\n"
+        << "    " << program
         << " --master <ip:port>"
         << " --priority <priority>"
-        << " --payload <text>\n";
+        << " --payload <text>\n"
+        << "\n"
+        << "  Query task:\n"
+        << "    " << program
+        << " --master <ip:port>"
+        << " --query <task_id>\n";
 }
-
 bool parseInt(const char* text, int& value) {
     try {
         value = std::stoi(text);
@@ -57,6 +63,9 @@ int main(int argc, char* argv[]) {
     bool has_priority = false;
 
     std::string payload;
+    
+    int query_task_id = 0;
+    bool has_query = false;
 
     for (int i = 1; i < argc; ++i) {
         const std::string arg = argv[i];
@@ -91,6 +100,16 @@ int main(int argc, char* argv[]) {
 
             payload = argv[++i];
 
+        } else if (arg == "--query" &&
+           i + 1 < argc) {
+
+            if (!parseInt(argv[++i],query_task_id) ||query_task_id <= 0) {
+
+                std::cerr<< "Invalid task id\n";
+                return EXIT_FAILURE;
+            }
+            has_query = true;
+
         } else if (arg == "--help" ||
                    arg == "-h") {
 
@@ -104,11 +123,16 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    if (master_ip.empty() ||
-        master_port == 0 ||
-        !has_priority ||
-        payload.empty()) {
+    if (master_ip.empty() ||master_port == 0) {
+        printUsage(argv[0]);
+        return EXIT_FAILURE;
+    }
 
+    const bool submit_mode =has_priority && !payload.empty();
+    const bool query_mode =has_query;
+
+    // 必须二选一：submit 或 query
+    if (submit_mode == query_mode) {
         printUsage(argv[0]);
         return EXIT_FAILURE;
     }
@@ -128,6 +152,63 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
+    if (query_mode) {
+        auto status =client.queryTask(query_task_id);
+
+        if (!status.has_value()) {
+            std::cerr<< "Failed to query task\n";
+
+            client.stop();
+            return EXIT_FAILURE;
+        }
+
+        if (!status->found) {
+            std::cout
+                << "[Client] task_id="
+                << query_task_id
+                << " not found"
+                << std::endl;
+
+            client.stop();
+            return EXIT_SUCCESS;
+        }
+
+        std::cout
+            << "[Client] task_id="
+            << status->task_id
+            << ", status=";
+
+        switch (status->status) {
+            case dts::TaskStatus::PENDING:
+                std::cout << "PENDING";
+                break;
+
+            case dts::TaskStatus::RUNNING:
+                std::cout << "RUNNING";
+                break;
+
+            case dts::TaskStatus::FAILED:
+                std::cout << "FAILED";
+                break;
+
+            case dts::TaskStatus::DONE:
+                std::cout << "DONE";
+                break;
+        }
+
+        std::cout << std::endl;
+
+        if (!status->result.empty()) {
+            std::cout
+                << "[Client] result="
+                << status->result
+                << std::endl;
+        }
+
+        client.stop();
+        return EXIT_SUCCESS;
+    }
+    
     dts::TaskSubmitInfo task;
 
     task.priority = priority;

@@ -215,6 +215,13 @@ add_executable(connection_concurrent_send_test
 target_link_libraries(connection_concurrent_send_test
     dts_core
 )
+add_executable(query_task_test
+    tests/integration/query_task_test.cpp
+)
+
+target_link_libraries(query_task_test
+    dts_core
+)
 # ========================
 # CTest registration
 # ========================
@@ -314,4 +321,13 @@ add_test(
 set_tests_properties(
     connection_concurrent_send_test
     PROPERTIES TIMEOUT 5
+)
+add_test(
+    NAME query_task_test
+    COMMAND query_task_test
+)
+
+set_tests_properties(
+    query_task_test
+    PROPERTIES TIMEOUT 10
 )
