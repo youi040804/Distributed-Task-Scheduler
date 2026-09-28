@@ -90,7 +90,7 @@ namespace dts{
         return true;
     }
 
-   ProcessTaskResult TaskManager::processTaskResult(int task_id,const std::string& result_data,const TaskStatus& status){
+    ProcessTaskResult TaskManager::processTaskResult(int task_id,const std::string& result_data,const TaskStatus& status){
         std::lock_guard<std::mutex> lock(task_mutex_);
 
         auto it = tasks_.find(task_id);
@@ -128,10 +128,11 @@ namespace dts{
         }
 
         // 正常成功完成
+        task->setTaskResult(result_data);
         task->setStatus(status);
         task->setAssignedWorker(-1);
 
-        return {ProcessResultCode::SUCCESS,workerId};
+        return {ProcessResultCode::SUCCESS, workerId};
     }
     
 

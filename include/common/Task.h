@@ -20,6 +20,7 @@ private:
     int task_priority_;
     TaskStatus task_status_;//task_status用枚举类型，而不是字符串！
     std::string task_payload_;
+    std::string task_result_;//任务最终执行结果
     int retry_count_;
     int assigned_worker_;   // 分配到的 Worker ID
 
@@ -33,6 +34,9 @@ public:
     int getTaskPriority() const;
     int getAssignedWorker() const;
     void setAssignedWorker(int worker_id);
+    
+    const std::string& getTaskResult() const;
+    void setTaskResult(const std::string& result);
     
     void increaseRetryCount();
     int getRetryCount() const;

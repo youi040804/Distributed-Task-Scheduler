@@ -47,5 +47,12 @@
     void Task::increaseRetryCount(){
         retry_count_++;
     }
+    
+    const std::string& Task::getTaskResult() const {
+        return task_result_;
+    }
+    void Task::setTaskResult(const std::string& result) {
+        task_result_ = result;
+    }
 
  }
