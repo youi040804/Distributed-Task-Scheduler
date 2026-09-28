@@ -76,7 +76,24 @@ namespace dts{
 
                     break;
                 }
+                case MessageType::QUERY_TASK: {
+                    TaskQueryInfo query_info =Protocol::deserializeTaskQueryInfo(msg.data);
 
+                    TaskStatusInfo status_info =handleTaskQuery(query_info);
+
+                    Message status_msg;
+                    status_msg.header.type = MessageType::TASK_STATUS;
+                    status_msg.data =Protocol::serializeTaskStatusInfo(status_info);
+
+                    if (!conn->sendMessage(status_msg)) {
+                        std::cerr
+                            << "[Master] Failed to send TASK_STATUS for Task "
+                            << query_info.task_id
+                            << std::endl;
+                    }
+
+                    break;
+                }
                 case MessageType::TASK_RESULT: {
                     TaskResultInfo info = Protocol::deserializeTaskResultInfo(msg.data);
                     handleTaskResult(info);
@@ -151,6 +168,23 @@ namespace dts{
         task_manager_.addTask(std::move(task));
 
         return id;
+    }
+    TaskStatusInfo Master::handleTaskQuery(const TaskQueryInfo& info) {
+        TaskStatusInfo status_info;
+        status_info.task_id = info.task_id;
+
+        auto snapshot =task_manager_.getTaskSnapshot(info.task_id);
+
+        if (!snapshot.has_value()) {
+            status_info.found = false;
+            return status_info;
+        }
+
+        status_info.found = true;
+        status_info.status = snapshot->status;
+        status_info.result = snapshot->result;
+
+        return status_info;
     }
 
     bool Master::handleTaskResult(const TaskResultInfo& info){
