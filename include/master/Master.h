@@ -47,6 +47,7 @@ public:
     void handleWorkerRegister(const WorkerRegisterInfo&workerinfo,std::shared_ptr<Connection>conn);
     bool handleHeartbeat(const HeartbeatInfo& info);
     int handleTaskSubmit(const TaskSubmitInfo& info);
+    TaskStatusInfo handleTaskQuery(const TaskQueryInfo& info);
     void handleConnection(std::shared_ptr<Connection>conn);
 
     //新增处理task_result的函数
