@@ -23,6 +23,7 @@ public:
     bool sendToMaster(const Message& msg); 
   
     std::optional<int> submitTask(const TaskSubmitInfo& info);
+    std::optional<TaskStatusInfo> queryTask(int task_id);
     void stop();
 
 };

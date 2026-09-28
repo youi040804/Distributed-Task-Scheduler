@@ -84,6 +84,52 @@ namespace dts{
 
         return ack.task_id;
     }
+
+    std::optional<TaskStatusInfo>Client::queryTask(int task_id) {
+        // 1. 构造 QUERY_TASK 请求
+        TaskQueryInfo query_info;
+        query_info.task_id = task_id;
+
+        Message msg;
+        msg.header.type = MessageType::QUERY_TASK;
+        msg.data = Protocol::serializeTaskQueryInfo(query_info);
+
+        // 2. 发送给 Master
+        if (!sendToMaster(msg)) {
+            std::cerr<< "task query failed!"<< std::endl;
+            return std::nullopt;
+        }
+
+        // 3. 获取当前连接
+        if (!client_) {
+            return std::nullopt;
+        }
+
+        Connection* conn = client_->getConnection();
+
+        if (!conn) {
+            return std::nullopt;
+        }
+
+        // 4. 等待 Master 返回 TASK_STATUS
+        Message response = conn->receiveMessage();
+
+        if (response.header.type !=
+            MessageType::TASK_STATUS) {
+
+            std::cerr
+                << "unexpected response type: "
+                << Protocol::messageTypeToString(response.header.type)
+                << std::endl;
+
+            return std::nullopt;
+        }
+
+        // 5. 解析查询结果
+        TaskStatusInfo status_info =Protocol::deserializeTaskStatusInfo(response.data);
+
+        return status_info;
+    }
     void Client::stop(){
         if(!client_){
             return ;
