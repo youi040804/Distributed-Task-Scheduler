@@ -52,6 +52,29 @@ namespace dts{
         }
         return std::nullopt;
     }
+    std::optional<TaskSnapshot>TaskManager::getTaskSnapshot(int task_id) const {
+        std::lock_guard<std::mutex> lock(task_mutex_);
+
+        auto it = tasks_.find(task_id);
+
+        if (it == tasks_.end()) {
+            return std::nullopt;
+        }
+
+        const auto& task = it->second;
+
+        TaskSnapshot snapshot;
+        snapshot.task_id = task->getTaskId();
+        snapshot.priority = task->getTaskPriority();
+        snapshot.status = task->getTaskStatus();
+        snapshot.payload = task->getTaskPayload();
+        snapshot.result = task->getTaskResult();
+        snapshot.retry_count = task->getRetryCount();
+        snapshot.assigned_worker =task->getAssignedWorker();
+
+        return snapshot;
+    }
+
     bool TaskManager::updateTaskStatus(int task_id,TaskStatus newStatus){
         std::lock_guard<std::mutex>lock(task_mutex_);
         auto it =tasks_.find(task_id);

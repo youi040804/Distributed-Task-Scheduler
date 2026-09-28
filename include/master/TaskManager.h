@@ -25,6 +25,15 @@ struct ProcessTaskResult {
     ProcessResultCode code;
     int worker_id = -1;
 };
+struct TaskSnapshot {
+    int task_id = 0;
+    int priority = 0;
+    TaskStatus status = TaskStatus::PENDING;
+    std::string payload;
+    std::string result;
+    int retry_count = 0;
+    int assigned_worker = -1;
+};
 
 class TaskManager{
 
@@ -51,6 +60,7 @@ public:
     void pushBackTask(std::shared_ptr<Task> task);
     
     std::optional<std::shared_ptr<Task>> getTask(int task_id)const;
+    std::optional<TaskSnapshot> getTaskSnapshot(int task_id) const;
     
     //通用状态修改器—— 用于"分配任务"等只需要改状态的场景
     bool updateTaskStatus(int task_id,TaskStatus newStatus);
