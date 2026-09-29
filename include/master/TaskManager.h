@@ -10,6 +10,7 @@
 #include<memory>
 #include<set>
 #include<utility>
+#include <cstdint> // uint64_t
 #include"common/Task.h"
 #include"common/Protocol.h"
 
@@ -33,6 +34,7 @@ struct TaskSnapshot {
     std::string result;
     int retry_count = 0;
     int assigned_worker = -1;
+    uint64_t active_execution_id = 0;
 };
 
 class TaskManager{

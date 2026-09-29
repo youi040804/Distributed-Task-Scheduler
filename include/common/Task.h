@@ -5,6 +5,7 @@
 
 #pragma once
 #include<string>
+#include <cstdint> // uint64_t
 #include<memory>
 namespace dts{
 enum class TaskStatus
@@ -23,6 +24,7 @@ private:
     std::string task_result_;//任务最终执行结果
     int retry_count_;
     int assigned_worker_;   // 分配到的 Worker ID
+    uint64_t active_execution_id_;
 
 public:
     Task(int id ,int priority,const std::string& payload);//const引用string，避免发生拷贝
@@ -40,6 +42,9 @@ public:
     
     void increaseRetryCount();
     int getRetryCount() const;
+    
+    uint64_t getActiveExecutionId() const;
+    void setActiveExecutionId(uint64_t execution_id);
 };
 
 }

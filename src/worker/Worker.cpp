@@ -199,7 +199,10 @@ namespace dts{
         try{
             result=executor_->execute(task);
         }catch(const std::exception&e){
-            result={task.task_id,TaskStatus::FAILED,e.what()};
+            result.task_id = task.task_id;
+            result.execution_id = task.execution_id;
+            result.status = TaskStatus::FAILED;
+            result.payload = e.what();
         }
 
         //4.更新本地计数

@@ -7,12 +7,13 @@
  namespace dts{
 
     Task::Task(int id, int priority, const std::string& payload)
-        : task_id_(id)
-        , task_priority_(priority)
-        , task_status_(TaskStatus::PENDING)
-        , task_payload_(payload)
-        , retry_count_(0)
-        , assigned_worker_(-1)
+    : task_id_(id)
+    , task_priority_(priority)
+    , task_status_(TaskStatus::PENDING)
+    , task_payload_(payload)
+    , retry_count_(0)
+    , assigned_worker_(-1)
+    , active_execution_id_(0)
     {
     }
 
@@ -54,5 +55,12 @@
     void Task::setTaskResult(const std::string& result) {
         task_result_ = result;
     }
+    
+    uint64_t Task::getActiveExecutionId() const {
+        return active_execution_id_;
+    }
+    void Task::setActiveExecutionId(uint64_t execution_id) {
+        active_execution_id_ = execution_id;
+    }
 
- }
+}

@@ -214,7 +214,58 @@ void testEnumToString() {
     std::cout << "✅ 枚举转字符串测试通过!" << std::endl;
     std::cout << std::endl;
 }
+void testTaskAssignInfo() {
+    std::cout
+        << "=== TaskAssignInfo 序列化/反序列化 ==="
+        << std::endl;
 
+    TaskAssignInfo original;
+    original.task_id = 42;
+    original.execution_id = 1001;
+    original.payload = "hello";
+
+    std::string data =
+        Protocol::serializeTaskAssignInfo(original);
+
+    TaskAssignInfo parsed =
+        Protocol::deserializeTaskAssignInfo(data);
+
+    assert(parsed.task_id == 42);
+    assert(parsed.execution_id == 1001);
+    assert(parsed.payload == "hello");
+
+    std::cout
+        << "✅ TaskAssignInfo 测试通过!"
+        << std::endl;
+}
+
+
+void testTaskResultInfo() {
+    std::cout
+        << "=== TaskResultInfo 序列化/反序列化 ==="
+        << std::endl;
+
+    TaskResultInfo original;
+    original.task_id = 42;
+    original.execution_id = 1001;
+    original.status = TaskStatus::DONE;
+    original.payload = "success";
+
+    std::string data =
+        Protocol::serializeTaskResultInfo(original);
+
+    TaskResultInfo parsed =
+        Protocol::deserializeTaskResultInfo(data);
+
+    assert(parsed.task_id == 42);
+    assert(parsed.execution_id == 1001);
+    assert(parsed.status == TaskStatus::DONE);
+    assert(parsed.payload == "success");
+
+    std::cout
+        << "✅ TaskResultInfo 测试通过!"
+        << std::endl;
+}
 int main() {
     std::cout << "========================================" << std::endl;
     std::cout << "  Protocol 层单元测试" << std::endl;
@@ -229,6 +280,8 @@ int main() {
         testFullMessageWithWorkerInfo();
         testTaskQueryInfo();
         testTaskStatusInfo();
+        testTaskAssignInfo();
+        testTaskResultInfo();
         
         std::cout << "========================================" << std::endl;
         std::cout << "  ✅ 所有测试通过！" << std::endl;

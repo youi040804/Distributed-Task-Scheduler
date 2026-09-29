@@ -132,32 +132,37 @@ namespace dts{
     //辅助函数：TaskAssignInfo--string
     std::string Protocol::serializeTaskAssignInfo(const TaskAssignInfo&info){
         MessageBuilder builder;
-        builder<<info.task_id<<info.payload;
+        builder << info.task_id<< info.execution_id<< info.payload;
         return builder.str();
     }
     TaskAssignInfo Protocol::deserializeTaskAssignInfo(const std::string&data){
         MessageParser parser(data);
         TaskAssignInfo task_assign_info;
         parser>>task_assign_info.task_id;
-        parser>>task_assign_info.payload;
+        parser >> task_assign_info.execution_id;
+        parser >> task_assign_info.payload;
         return task_assign_info;
     }
 
     //辅助函数：TaskResultInfo--string
     std::string Protocol::serializeTaskResultInfo(const TaskResultInfo&info){
         MessageBuilder builder;
-        builder<<info.task_id<<static_cast<int>(info.status)<<info.payload;
+        builder<<info.task_id<< info.execution_id<<static_cast<int>(info.status)<<info.payload;
         return builder.str();
     }
     TaskResultInfo Protocol::deserializeTaskResultInfo(const std::string&data){
         MessageParser parser(data);
-        int status;
 
         TaskResultInfo task_result_info;
-        parser>>task_result_info.task_id;
+        int status = 0;
+
+        parser >> task_result_info.task_id;
+        parser >> task_result_info.execution_id;
         parser >> status;
-        task_result_info.status=static_cast<TaskStatus>(status);
-        parser>>task_result_info.payload;
+        parser >> task_result_info.payload;
+
+        task_result_info.status =static_cast<TaskStatus>(status);
+
 
         return task_result_info;
     }

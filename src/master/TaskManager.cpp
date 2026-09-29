@@ -71,7 +71,8 @@ namespace dts{
         snapshot.result = task->getTaskResult();
         snapshot.retry_count = task->getRetryCount();
         snapshot.assigned_worker =task->getAssignedWorker();
-
+        snapshot.active_execution_id =task->getActiveExecutionId();
+        
         return snapshot;
     }
 

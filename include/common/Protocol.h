@@ -10,6 +10,7 @@ data = 业务数据
 #include<string>
 #include <sstream>//for ostringstream
 #include<vector>
+#include <cstdint> // uint64_t
 #include"Message.h"
 #include"Task.h"
 namespace dts{
@@ -44,17 +45,19 @@ struct TaskStatusInfo {
     TaskStatus status = TaskStatus::PENDING;
     std::string result = "";
 };
-
-struct TaskAssignInfo{
-    int task_id=0;
-    std::string payload="";
+struct TaskAssignInfo {
+    int task_id = 0;
+    uint64_t execution_id = 0;
+    std::string payload = "";
 };
 
-struct TaskResultInfo{
-    int task_id=0;
-    TaskStatus status=TaskStatus::FAILED;
-    std::string payload="";
+struct TaskResultInfo {
+    int task_id = 0;
+    uint64_t execution_id = 0;
+    TaskStatus status = TaskStatus::FAILED;
+    std::string payload = "";
 };
+
 //Protocol类
 class Protocol{
 
