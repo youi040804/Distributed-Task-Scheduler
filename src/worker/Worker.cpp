@@ -195,49 +195,7 @@ namespace dts{
         running_task_count_++;
 
         //3.调用 TaskExecutor 执行
-        TaskResultInfo result;
-
-        const bool should_execute = task_deduplicator_.acquire(task.task_id);
-
-        if (should_execute) {
-            try {
-                result = executor_->execute(task);
-
-                if (result.status == TaskStatus::DONE) {
-                    task_deduplicator_.markSucceeded( task.task_id, result.payload );
-                } else {
-                    task_deduplicator_.markFailed( task.task_id );
-                }
-            } catch (const std::exception& e) {
-                // 异常也属于执行失败：必须释放 EXECUTING 状态，
-                // 否则相同 task_id 的其它线程会一直等待
-                task_deduplicator_.markFailed( task.task_id );
-
-                result.task_id = task.task_id;
-                result.execution_id = task.execution_id;
-                result.status = TaskStatus::FAILED;
-                result.payload = e.what();
-            }
-        } else {
-            // acquire() 返回 false：表示这个逻辑任务已经成功执行过
-            auto cached_result = task_deduplicator_.getSuccessfulResult( task.task_id );
-
-            result.task_id = task.task_id;
-
-            // 使用当前 assignment 的 execution_id，
-            // 而不是第一次成功执行时的 execution_id
-            result.execution_id = task.execution_id;
-
-            result.status = TaskStatus::DONE;
-
-            if (!cached_result.has_value()) {
-                result.status = TaskStatus::FAILED;
-                result.payload = "dedup cache missing";
-            } else {
-                result.status = TaskStatus::DONE;
-                result.payload = *cached_result;
-            }
-        }
+        TaskResultInfo result = executeTask(task);
 
         //4.更新本地计数
         running_task_count_--;
@@ -252,6 +210,45 @@ namespace dts{
         }
     }
 
+    TaskResultInfo Worker::executeTask( const TaskAssignInfo& task ) {
+        TaskResultInfo result;
+
+        const bool should_execute = task_deduplicator_.acquire(task.task_id);
+
+        if (should_execute) {
+            try {
+                result = executor_->execute(task);
+
+                if (result.status == TaskStatus::DONE) {
+                    task_deduplicator_.markSucceeded( task.task_id, result.payload );
+                } else {
+                    task_deduplicator_.markFailed( task.task_id );
+                }
+            } catch (const std::exception& e) {
+                task_deduplicator_.markFailed( task.task_id );
+
+                result.task_id = task.task_id;
+                result.execution_id = task.execution_id;
+                result.status = TaskStatus::FAILED;
+                result.payload = e.what();
+            }
+        } else {
+            auto cached_result = task_deduplicator_.getSuccessfulResult( task.task_id );
+
+            result.task_id = task.task_id;
+            result.execution_id = task.execution_id;
+
+            if (!cached_result.has_value()) {
+                result.status = TaskStatus::FAILED;
+                result.payload = "dedup cache missing";
+            } else {
+                result.status = TaskStatus::DONE;
+                result.payload = *cached_result;
+            }
+        }
+
+        return result;
+    }
 
     void Worker::stop(){
         std::cout << "[Worker] stopping..." << std::endl;

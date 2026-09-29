@@ -58,6 +58,8 @@ public:
     void receiveTaskLoop();
     void executeTaskLoop();
     Message recvTaskAssign();
+    
+    TaskResultInfo executeTask( const TaskAssignInfo& task );
 
     void stop();
 };
