@@ -116,6 +116,38 @@ void testWorkerInfoTimeout() {
     assert(!worker.isOverTime(1));
     std::cout << " 心跳超时判断正确" << std::endl;
 }
+void testOptimisticLoadBalancing() {
+    std::cout << "=== Test 6: 乐观负载预占下的多 Worker 调度 ===" << std::endl;
+
+    WorkerManager manager;
+
+    manager.addWorker( WorkerInfo(1, "127.0.0.1", 9001), nullptr );
+    manager.addWorker( WorkerInfo(2, "127.0.0.1", 9002), nullptr );
+    manager.addWorker( WorkerInfo(3, "127.0.0.1", 9003), nullptr );
+
+    // 模拟 Scheduler 快速连续分配 9 个任务
+    // 每次选中 Worker 后立即进行 optimistic load +1，不等待 heartbeat 更新
+    for (int i = 0; i < 9; ++i) {
+        auto [worker_id, load] = manager.pickLeastLoadedWorker();
+
+        assert(worker_id != -1);
+        assert( manager.incrementWorkerQueuedLoad(worker_id) );
+    }
+
+    auto worker1 = manager.getWorkerInfo(1);
+    auto worker2 = manager.getWorkerInfo(2);
+    auto worker3 = manager.getWorkerInfo(3);
+
+    assert(worker1.has_value());
+    assert(worker2.has_value());
+    assert(worker3.has_value());
+
+    assert(worker1->getWorkerLoad() == 3);
+    assert(worker2->getWorkerLoad() == 3);
+    assert(worker3->getWorkerLoad() == 3);
+
+    std::cout << " 9 个快速任务均衡分配为 3 / 3 / 3" << std::endl;
+}
 
 int main() {
     std::cout << "========================================" << std::endl;
@@ -127,6 +159,7 @@ int main() {
     testDeadWorkerIsExcluded();
     testHeartbeatRestoresAliveState();
     testWorkerInfoTimeout();
+    testOptimisticLoadBalancing();
 
     std::cout << "========================================" << std::endl;
     std::cout << "   所有测试通过！" << std::endl;
