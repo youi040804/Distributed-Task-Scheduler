@@ -20,6 +20,7 @@ namespace dts{
         // 不加锁！调用者必须已经持有 task_mutex_
         if(task){
             task->setAssignedWorker(-1); //在入队时自动清除assigned_worker
+            task->setActiveExecutionId(0);
             task->setStatus(TaskStatus::PENDING);// 状态改回 PENDING
             readyQueue_.push(task);
         }
@@ -91,29 +92,52 @@ namespace dts{
         return true;
     }
 
-    bool TaskManager::assignTask(int task_id, int worker_id){
-
+    bool TaskManager::beginExecution(int task_id,int worker_id,uint64_t execution_id) {
         std::lock_guard<std::mutex> lock(task_mutex_);
 
         auto it = tasks_.find(task_id);
 
-        if(it == tasks_.end()){
+        if (it == tasks_.end()) {
             return false;
         }
 
         auto task = it->second;
 
-        // 当前只允许 PENDING -> RUNNING
-        if(!canTransition(task->getTaskStatus(),TaskStatus::RUNNING)){
+        if (!canTransition(task->getTaskStatus(),TaskStatus::RUNNING)) {
+            return false;
+        }
+
+        if (execution_id == 0) {
             return false;
         }
 
         task->setAssignedWorker(worker_id);
+        task->setActiveExecutionId(execution_id);
         task->setStatus(TaskStatus::RUNNING);
 
         return true;
     }
+    bool TaskManager::rollbackExecution(int task_id,uint64_t execution_id) {
+        std::lock_guard<std::mutex> lock(task_mutex_);
 
+        auto it = tasks_.find(task_id);
+        if (it == tasks_.end()) {
+            return false;
+        }
+
+        auto task = it->second;
+
+        // 只允许回滚当前这一次 execution
+        if (task->getTaskStatus() != TaskStatus::RUNNING ||
+            task->getActiveExecutionId() != execution_id) {
+            return false;
+        }
+
+        pushBackTaskUnsafe(task);
+
+        return true;
+    }
+    
     ProcessTaskResult TaskManager::processTaskResult(int task_id,const std::string& result_data,const TaskStatus& status){
         std::lock_guard<std::mutex> lock(task_mutex_);
 
@@ -140,12 +164,14 @@ namespace dts{
                 // 还有重试次数，重新进入待调度队列
                 pushBackTaskUnsafe(task);
 
+
                 return {ProcessResultCode::RETRY,workerId};
 
             }else{
                 // 重试次数耗尽，最终失败
                 task->setStatus(TaskStatus::FAILED);
                 task->setAssignedWorker(-1);
+                task->setActiveExecutionId(0);
 
                 return {ProcessResultCode::FINAL_FAILED,workerId};
             }
@@ -155,7 +181,8 @@ namespace dts{
         task->setTaskResult(result_data);
         task->setStatus(status);
         task->setAssignedWorker(-1);
-
+        task->setActiveExecutionId(0);
+       
         return {ProcessResultCode::SUCCESS, workerId};
     }
     

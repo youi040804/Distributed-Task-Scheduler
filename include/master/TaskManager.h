@@ -67,8 +67,9 @@ public:
     //通用状态修改器—— 用于"分配任务"等只需要改状态的场景
     bool updateTaskStatus(int task_id,TaskStatus newStatus);
     // Scheduler 分配任务成功后统一修改 assigned_worker 和状态
-    bool assignTask(int task_id, int worker_id);
-
+    bool beginExecution(int task_id,int worker_id,uint64_t execution_id);
+    bool rollbackExecution(int task_id,uint64_t execution_id);
+   
     // 专门用于"任务完成"场景
     ProcessTaskResult  processTaskResult(int task_id, const std::string& result_data,const TaskStatus&status);
 

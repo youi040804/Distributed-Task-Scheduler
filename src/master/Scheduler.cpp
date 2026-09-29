@@ -34,37 +34,60 @@ namespace dts{
             return false;
 
         }
-        //4.构造TaskAssignInfo
-        TaskAssignInfo info;
-        info.task_id=task->getTaskId();
-        info.payload=task->getTaskPayload();
 
-        //5.构造TASK_ASSIGN Message
-        Message msg;
-        msg.header.type=MessageType::TASK_ASSIGN;
-        msg.data=Protocol::serializeTaskAssignInfo(info);
-        //6.发送给 Worker
-        if(!worker_manager_->sendTaskToWorker(workerId,msg)){
-            std::cout << "[Scheduler] "
-                      << "failed to send task to Worker "
-                      << workerId << std::endl;
-            //分配任务失败，重新将任务添加回task_queue_
+        // 为本次调度生成唯一 execution_id
+        uint64_t execution_id =next_execution_id_.fetch_add(1);
+
+        // 先在 Master 中确立这次 execution
+        if (!task_manager_->beginExecution(task->getTaskId(),workerId,execution_id)) {
+
+            std::cout
+                << "[Scheduler] failed to begin execution for task "
+                << task->getTaskId()
+                << std::endl;
+
+            // 任务已经从 readyQueue_ 中取出，但 beginExecution 失败。
+            // 需要重新放回队列，避免任务丢失。
             task_manager_->pushBackTask(task);
+
             return false;
         }
 
-        // 7.TASK_ASSIGN 发送成功后，统一由 TaskManager 更新任务状态
-        if(!task_manager_->assignTask(info.task_id,workerId)){
-            std::cout << "[Scheduler] failed to update task state"<< std::endl;
+        // beginExecution 成功后再构造下发消息
+        TaskAssignInfo info;
+        info.task_id = task->getTaskId();
+        info.execution_id = execution_id;
+        info.payload = task->getTaskPayload();
+
+        Message msg;
+        msg.header.type = MessageType::TASK_ASSIGN;
+        msg.data = Protocol::serializeTaskAssignInfo(info);
+
+        // 最后才真正发送给 Worker
+        if (!worker_manager_->sendTaskToWorker(workerId, msg)) {
+
+            std::cout
+                << "[Scheduler] failed to send task "
+                << task->getTaskId()
+                << ", execution "
+                << execution_id
+                << " to Worker "
+                << workerId
+                << std::endl;
+
+            // 网络发送失败：
+            // RUNNING → PENDING，并重新进入 readyQueue_
+            task_manager_->rollbackExecution(task->getTaskId(),execution_id);
             return false;
         }
 
         //8.打印调度信息
-        std::cout << "[Scheduler] Task " << task->getTaskId()
-                  << " (priority=" << task->getTaskPriority() << ")"
-                  << " → Worker " << workerId
-                  << " (current load=" << load << ")"
-                  << std::endl;
+        std::cout << "[Scheduler] Task "<< task->getTaskId()
+          << " execution="<< execution_id
+          << " (priority="<< task->getTaskPriority()
+          << ") → Worker "<< workerId
+          << " (current load="<< load<< ")"
+          << std::endl;
 
         return true;
 
