@@ -56,7 +56,22 @@ namespace dts
         return true;
     }
 
-    //获取超时的worker
+    bool WorkerManager::incrementWorkerQueuedLoad(int workerId) {
+        std::lock_guard<std::mutex> lock(worker_mutex_);
+
+        auto it = workers_.find(workerId);
+        if (it == workers_.end()) {
+            return false;
+        }
+
+        if (!it->second.info.isAlive()) {
+            return false;
+        }
+
+        it->second.info.incrementQueuedTaskCount();
+        return true;
+    }
+        //获取超时的worker
     std::vector<int> WorkerManager::getTimeoutWorker(){
         std::vector<int>timeoutList;
 

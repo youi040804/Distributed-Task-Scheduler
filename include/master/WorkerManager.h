@@ -32,7 +32,8 @@ public:
     bool updateWorkerHeartbeat(int workerId);
     bool updateWorkerLoad(int workerId, size_t runningCount, size_t queuedCount);
 
-
+    bool incrementWorkerQueuedLoad(int workerId);
+    
     //获取超时的worker
     std::vector<int> getTimeoutWorker();
     bool markWorkerDead(int workerId);

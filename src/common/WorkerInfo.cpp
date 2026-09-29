@@ -46,6 +46,10 @@ namespace dts{
         queued_task_count_=queuedCount;
     }
 
+    void WorkerInfo::incrementQueuedTaskCount() {
+        ++queued_task_count_;
+    }
+    
 
     std::chrono::system_clock::time_point WorkerInfo::getLastHeartbeatTime()const{
         return last_heartbeat_time_;

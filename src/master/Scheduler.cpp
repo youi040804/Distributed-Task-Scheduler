@@ -81,6 +81,12 @@ namespace dts{
             return false;
         }
 
+        if (!worker_manager_->incrementWorkerQueuedLoad(workerId)) {
+            std::cerr
+                << "[Scheduler] failed to update local load for Worker "
+                << workerId
+                << std::endl;
+        }
         //8.打印调度信息
         std::cout << "[Scheduler] Task "<< task->getTaskId()
           << " execution="<< execution_id

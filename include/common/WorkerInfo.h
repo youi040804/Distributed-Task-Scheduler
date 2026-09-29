@@ -34,7 +34,9 @@ public:
 
     void setRunningTaskCount(size_t runningCount);
     void setQueuedTaskCount(size_t queuedCount);
-  
+    
+    void incrementQueuedTaskCount();
+    
     void updateHeartbeat();
 
     bool isOverTime(int timeoutSeconds)const ;
