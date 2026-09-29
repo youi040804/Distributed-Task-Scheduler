@@ -17,6 +17,7 @@
 #include"common/Protocol.h"
 #include "utils/Config.h"
 #include"TaskExecutor.h"
+#include "worker/TaskDeduplicator.h"
 namespace dts{
 
 class Worker{
@@ -41,6 +42,8 @@ private:
     std::mutex heartbeat_mutex_;
     std::condition_variable heartbeat_cv_;
 
+    std::unique_ptr<TaskExecutor> executor_;
+    TaskDeduplicator task_deduplicator_;
 
 public:
     explicit Worker(int worker_id,size_t executor_thread_count = 1);
