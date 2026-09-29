@@ -55,6 +55,7 @@ set(DTS_CORE_SRC
 
     # worker
     src/worker/TaskExecutor.cpp
+    src/worker/TaskDeduplicator.cpp
     src/worker/Worker.cpp
 
     #client
