@@ -250,6 +250,13 @@ add_executable(worker_dedup_test
 target_link_libraries(worker_dedup_test
     dts_core
 )
+add_executable(dts_benchmark
+    apps/benchmark_main.cpp
+)
+
+target_link_libraries(dts_benchmark
+    dts_core
+)
 # ========================
 # CTest registration
 # ========================
