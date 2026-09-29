@@ -243,6 +243,13 @@ add_executable(task_deduplicator_test
 target_link_libraries(task_deduplicator_test
     dts_core
 )
+add_executable(worker_dedup_test
+    tests/worker/worker_dedup_test.cpp
+)
+
+target_link_libraries(worker_dedup_test
+    dts_core
+)
 # ========================
 # CTest registration
 # ========================
@@ -372,5 +379,14 @@ add_test(
 
 set_tests_properties(
     task_deduplicator_test
+    PROPERTIES TIMEOUT 5
+)
+add_test(
+    NAME worker_dedup_test
+    COMMAND worker_dedup_test
+)
+
+set_tests_properties(
+    worker_dedup_test
     PROPERTIES TIMEOUT 5
 )
