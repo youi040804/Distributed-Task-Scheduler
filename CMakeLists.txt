@@ -236,6 +236,13 @@ add_executable(stale_execution_result_test
 target_link_libraries(stale_execution_result_test
     dts_core
 )
+add_executable(task_deduplicator_test
+    tests/worker/task_deduplicator_test.cpp
+)
+
+target_link_libraries(task_deduplicator_test
+    dts_core
+)
 # ========================
 # CTest registration
 # ========================
@@ -357,4 +364,13 @@ set_tests_properties(
 add_test(
     NAME stale_execution_result_test
     COMMAND stale_execution_result_test
+)
+add_test(
+    NAME task_deduplicator_test
+    COMMAND task_deduplicator_test
+)
+
+set_tests_properties(
+    task_deduplicator_test
+    PROPERTIES TIMEOUT 5
 )
