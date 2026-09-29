@@ -35,7 +35,6 @@ private:
     size_t executor_thread_count_;
 
     std::queue<TaskAssignInfo>task_queue_;
-    std::unique_ptr<TaskExecutor>executor_;
     std::mutex task_mutex_;
     //条件变量，用于生产者-消费者模型
     std::condition_variable task_cv_;
