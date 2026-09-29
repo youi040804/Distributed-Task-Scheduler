@@ -20,7 +20,8 @@ enum class ProcessResultCode {
     RETRY,
     FINAL_FAILED,
     NOT_FOUND,
-    INVALID_TRANSITION
+    INVALID_TRANSITION,
+    STALE_EXECUTION    
 };
 struct ProcessTaskResult {
     ProcessResultCode code;
@@ -71,8 +72,8 @@ public:
     bool rollbackExecution(int task_id,uint64_t execution_id);
    
     // 专门用于"任务完成"场景
-    ProcessTaskResult  processTaskResult(int task_id, const std::string& result_data,const TaskStatus&status);
-
+    ProcessTaskResult  processTaskResult(int task_id,uint64_t execution_id,
+                                            const std::string& result_data,const TaskStatus& status);
 
     bool removeTask(int task_id);
     bool hasPendingTask();

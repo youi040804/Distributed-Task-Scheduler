@@ -189,8 +189,9 @@ namespace dts{
 
     bool Master::handleTaskResult(const TaskResultInfo& info){
         //Master不负责更改任务状态，交由TaskManager来更新任务状态
-        auto result = task_manager_.processTaskResult(info.task_id,info.payload,info.status);
-
+        auto result = task_manager_.processTaskResult(info.task_id,info.execution_id,
+                                                        info.payload,info.status);
+        
         switch(result.code){
 
             case ProcessResultCode::SUCCESS:{
@@ -211,6 +212,12 @@ namespace dts{
             }
             case ProcessResultCode::INVALID_TRANSITION:{
                 std::cout << "[Master] Task "<< info.task_id<< " invalid status transition"<< std::endl;
+                return false;
+            }
+            case ProcessResultCode::STALE_EXECUTION: {
+                std::cout<< "[Master] Ignore stale result for Task "<< info.task_id
+                            << ", execution="<< info.execution_id<< std::endl;
+
                 return false;
             }
         }

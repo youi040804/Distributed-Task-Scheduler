@@ -137,8 +137,8 @@ namespace dts{
 
         return true;
     }
-    
-    ProcessTaskResult TaskManager::processTaskResult(int task_id,const std::string& result_data,const TaskStatus& status){
+
+    ProcessTaskResult TaskManager::processTaskResult(int task_id,uint64_t execution_id,const std::string& result_data,const TaskStatus& status){
         std::lock_guard<std::mutex> lock(task_mutex_);
 
         auto it = tasks_.find(task_id);
@@ -150,6 +150,10 @@ namespace dts{
         auto task = it->second;
         TaskStatus oldStatus = task->getTaskStatus();
 
+        if (task->getActiveExecutionId() != execution_id) {
+            return {ProcessResultCode::STALE_EXECUTION,-1};
+        }
+        
         if(!canTransition(oldStatus, status)){
             return {ProcessResultCode::INVALID_TRANSITION, -1};
         }
