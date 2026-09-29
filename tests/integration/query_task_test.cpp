@@ -1,22 +1,11 @@
 /*
  * query_task_test.cpp
- *
- * 验证 Client -> Master 的任务查询闭环：
- *
- * 1. Client 提交任务，获得 task_id
- * 2. Client 使用 task_id 查询任务
- * 3. Master 返回 TASK_STATUS
- * 4. 查询不存在的 task_id，Master 返回 found=false
- *
- * 本测试不启动 Worker，因此任务不会被真正执行。
- * 测试重点是 SUBMIT_TASK / TASK_SUBMIT_ACK /
- * QUERY_TASK / TASK_STATUS 的网络闭环。
  */
 
-#include <cassert>      // assert
-#include <chrono>       // std::chrono
-#include <iostream>     // std::cout, std::cerr
-#include <thread>       // std::thread, sleep_for
+#include <cassert>      
+#include <chrono>       
+#include <iostream>     
+#include <thread>       
 
 #include "client/Client.h"
 #include "common/Protocol.h"
