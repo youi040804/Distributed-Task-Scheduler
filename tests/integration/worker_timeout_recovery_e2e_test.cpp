@@ -113,7 +113,7 @@ int main(){
                 ||!waitForWorker(master, WORKER_2_ID,std::chrono::seconds(2))){
         std::cerr << "❌ Master 未记录全部 Worker"<< std::endl;
     } else {
-        std::cout << "✅ 两个 Worker 均注册成功"<< std::endl;
+        std::cout << " 两个 Worker 均注册成功"<< std::endl;
         std::cout << "[Step 3] 提交任务，等待 Worker 1 接收..."<< std::endl;
 
         client.setMasterAddress("127.0.0.1", MASTER_PORT);
@@ -133,7 +133,7 @@ int main(){
                 if (!taskAssignedToWorker1) {
                     std::cerr << "❌ 任务未分配给 Worker 1"<< std::endl;
                 } else {
-                    std::cout << "✅ 任务已分配给 Worker 1"<< std::endl;
+                    std::cout << " 任务已分配给 Worker 1"<< std::endl;
                     std::cout<< "[Step 4] 停止 Worker 1，模拟执行期间失联..."<< std::endl;
 
                     worker1.stop();
@@ -146,7 +146,7 @@ int main(){
                     if (!taskReassignedToWorker2) {
                         std::cerr<< "❌ 任务未重新调度给 Worker 2"<< std::endl;
                     } else {
-                        std::cout<< "✅ 超时任务已重新调度给 Worker 2"<< std::endl;
+                        std::cout<< " 超时任务已重新调度给 Worker 2"<< std::endl;
 
                         taskDone = waitForTaskDone(master, 1,std::chrono::seconds(3));
 
@@ -182,7 +182,7 @@ int main(){
     assert(taskDone);
 
     std::cout << "========================================"<< std::endl;
-    std::cout<< "  ✅ Worker 超时后任务恢复并重新执行成功"<< std::endl;
+    std::cout<< "   Worker 超时后任务恢复并重新执行成功"<< std::endl;
     std::cout << "========================================"<< std::endl;
 
     return 0;

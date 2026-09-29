@@ -115,7 +115,7 @@ void testConcurrentSend() {
     sender.disconnect();
     receiver.disconnect();
 
-    std::cout<< "✅ 两个线程并发发送 "<< MESSAGE_COUNT * 2<< " 条消息，所有协议帧均完整"<< std::endl;
+    std::cout<< " 两个线程并发发送 "<< MESSAGE_COUNT * 2<< " 条消息，所有协议帧均完整"<< std::endl;
 }
 
 }
@@ -132,7 +132,7 @@ int main() {
 
     std::cout<< "========================================"<< std::endl;
 
-    std::cout<< "  ✅ 所有测试通过！"<< std::endl;
+    std::cout<< "   所有测试通过！"<< std::endl;
 
     std::cout<< "========================================"<< std::endl;
 

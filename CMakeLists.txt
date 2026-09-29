@@ -228,6 +228,13 @@ add_executable(worker_thread_pool_test
 target_link_libraries(worker_thread_pool_test
     dts_core
 )
+add_executable(stale_execution_result_test
+    tests/master/stale_execution_result_test.cpp
+)
+
+target_link_libraries(stale_execution_result_test
+    dts_core
+)
 # ========================
 # CTest registration
 # ========================
@@ -345,4 +352,8 @@ add_test(
 set_tests_properties(
     worker_thread_pool_test
     PROPERTIES TIMEOUT 10
+)
+add_test(
+    NAME stale_execution_result_test
+    COMMAND stale_execution_result_test
 )

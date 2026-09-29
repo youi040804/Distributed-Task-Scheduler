@@ -69,7 +69,7 @@ void testFragmentedMessageAndLargePayload(){
     sender.join();
     receiver.disconnect();
 
-    std::cout << "✅ 拆包和超过旧 999 字节上限的大消息均能正确接收"<< std::endl;
+    std::cout << " 拆包和超过旧 999 字节上限的大消息均能正确接收"<< std::endl;
 }
 void testStickyPackets(){
     std::cout << "=== Test 2: 粘包顺序接收 ===" << std::endl;
@@ -97,7 +97,7 @@ void testStickyPackets(){
     ::close(fds[0]);
     receiver.disconnect();
 
-    std::cout << "✅ 粘在同一字节流中的两条消息可按顺序读取"<< std::endl;
+    std::cout << " 粘在同一字节流中的两条消息可按顺序读取"<< std::endl;
 }
 
 }//namespace
@@ -111,7 +111,7 @@ int main(){
     testStickyPackets();
 
     std::cout << "========================================" << std::endl;
-    std::cout << "  ✅ 所有测试通过！" << std::endl;
+    std::cout << "   所有测试通过！" << std::endl;
     std::cout << "========================================" << std::endl;
 
     return 0;

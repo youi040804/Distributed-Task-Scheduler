@@ -31,7 +31,7 @@ void testMessageSerializeDeserialize() {
     assert(parsed.header.length == original.header.length);
     assert(parsed.data == original.data);
     
-    std::cout << "✅ Message 序列化/反序列化测试通过!" << std::endl;
+    std::cout << " Message 序列化/反序列化测试通过!" << std::endl;
     std::cout << "   Type: " << Protocol::messageTypeToString(parsed.header.type) << std::endl;
     std::cout << "   Length: " << parsed.header.length << std::endl;
     std::cout << "   Data: " << parsed.data << std::endl;
@@ -69,7 +69,7 @@ void testTaskSubmitAckInfo() {
 
     assert(received_ack.task_id == 123);
 
-    std::cout<< "✅ TaskSubmitAckInfo 测试通过!"<< std::endl;
+    std::cout<< " TaskSubmitAckInfo 测试通过!"<< std::endl;
     std::cout<< "   Task ID: "<< received_ack.task_id<< std::endl;
     std::cout << std::endl;
 }
@@ -136,7 +136,7 @@ void testWorkerRegisterInfo() {
     assert(parsed.ip == original.ip);
     assert(parsed.port == original.port);
     
-    std::cout << "✅ WorkerRegisterInfo 序列化/反序列化测试通过!" << std::endl;
+    std::cout << " WorkerRegisterInfo 序列化/反序列化测试通过!" << std::endl;
     std::cout << "   Worker ID: " << parsed.worker_id << std::endl;
     std::cout << "   IP: " << parsed.ip << std::endl;
     std::cout << "   Port: " << parsed.port << std::endl;
@@ -182,7 +182,7 @@ void testFullMessageWithWorkerInfo() {
     assert(parsed.ip == info.ip);
     assert(parsed.port == info.port);
     
-    std::cout << "✅ 完整消息闭环测试通过!" << std::endl;
+    std::cout << " 完整消息闭环测试通过!" << std::endl;
     std::cout << "   收到的 Worker ID: " << parsed.worker_id << std::endl;
     std::cout << "   收到的 IP: " << parsed.ip << std::endl;
     std::cout << "   收到的 Port: " << parsed.port << std::endl;
@@ -211,7 +211,7 @@ void testEnumToString() {
     assert(Protocol::stringToMessageType("QUERY_TASK") == MessageType::QUERY_TASK);
     
 
-    std::cout << "✅ 枚举转字符串测试通过!" << std::endl;
+    std::cout << " 枚举转字符串测试通过!" << std::endl;
     std::cout << std::endl;
 }
 void testTaskAssignInfo() {
@@ -235,7 +235,7 @@ void testTaskAssignInfo() {
     assert(parsed.payload == "hello");
 
     std::cout
-        << "✅ TaskAssignInfo 测试通过!"
+        << " TaskAssignInfo 测试通过!"
         << std::endl;
 }
 
@@ -263,7 +263,7 @@ void testTaskResultInfo() {
     assert(parsed.payload == "success");
 
     std::cout
-        << "✅ TaskResultInfo 测试通过!"
+        << " TaskResultInfo 测试通过!"
         << std::endl;
 }
 int main() {
@@ -284,7 +284,7 @@ int main() {
         testTaskResultInfo();
         
         std::cout << "========================================" << std::endl;
-        std::cout << "  ✅ 所有测试通过！" << std::endl;
+        std::cout << "   所有测试通过！" << std::endl;
         std::cout << "========================================" << std::endl;
         return 0;
         

@@ -105,7 +105,7 @@ int main() {
     if (!heartbeatUpdated) {
         std::cerr << "❌ 未观察到 Worker 的下一次心跳" << std::endl;
     } else {
-        std::cout << "✅ 心跳已刷新，Worker 保持存活" << std::endl;
+        std::cout << " 心跳已刷新，Worker 保持存活" << std::endl;
         std::cout << "[Step 4] 停止 Worker，等待 Master 判定超时..."<< std::endl;
 
         worker.stop();
@@ -133,7 +133,7 @@ int main() {
     assert(heartbeatUpdated);
     assert(workerTimedOut);
     std::cout << "========================================" << std::endl;
-    std::cout << "  ✅ 心跳刷新与超时检测均通过" << std::endl;
+    std::cout << "   心跳刷新与超时检测均通过" << std::endl;
     std::cout << "========================================" << std::endl;
 
     return 0;

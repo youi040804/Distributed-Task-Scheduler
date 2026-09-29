@@ -25,7 +25,7 @@ void testWorkerRegistrationAndLoadUpdate() {
     assert(worker->getQueuedTaskCount()==3);
     assert(worker->getWorkerLoad()==5);
 
-    std::cout << "✅ Worker 信息与负载更新正确" << std::endl;
+    std::cout << " Worker 信息与负载更新正确" << std::endl;
 }
 
 void testLeastLoadScheduling() {
@@ -49,7 +49,7 @@ void testLeastLoadScheduling() {
     assert(workerId==2);
     assert(load==1);
 
-    std::cout << "✅ 选择负载最低 Worker；负载相同时选择 ID 更小者"
+    std::cout << " 选择负载最低 Worker；负载相同时选择 ID 更小者"
               << std::endl;
 }
 
@@ -76,7 +76,7 @@ void testDeadWorkerIsExcluded() {
     std::tie(workerId,load)=manager.pickLeastLoadedWorker();
     assert(workerId==-1);
     assert(load==0);
-    std::cout << "✅ 死亡 Worker 已从调度候选集合排除" << std::endl;
+    std::cout << " 死亡 Worker 已从调度候选集合排除" << std::endl;
 }
 
 void testHeartbeatRestoresAliveState() {
@@ -99,7 +99,7 @@ void testHeartbeatRestoresAliveState() {
 
     assert(!manager.updateWorkerHeartbeat(999));
 
-    std::cout << "✅ 收到心跳后 Worker 恢复为存活状态" << std::endl;
+    std::cout << " 收到心跳后 Worker 恢复为存活状态" << std::endl;
 }
 
 void testWorkerInfoTimeout() {
@@ -114,7 +114,7 @@ void testWorkerInfoTimeout() {
 
     worker.updateHeartbeat();
     assert(!worker.isOverTime(1));
-    std::cout << "✅ 心跳超时判断正确" << std::endl;
+    std::cout << " 心跳超时判断正确" << std::endl;
 }
 
 int main() {
@@ -129,7 +129,7 @@ int main() {
     testWorkerInfoTimeout();
 
     std::cout << "========================================" << std::endl;
-    std::cout << "  ✅ 所有测试通过！" << std::endl;
+    std::cout << "   所有测试通过！" << std::endl;
     std::cout << "========================================" << std::endl;
 
     return 0;

@@ -42,7 +42,7 @@ void testTaskIsReturnedWhenSendFails(){
     auto retryTask = taskManager.getHighestPriorityTask();
     assert(retryTask!=nullptr);
     assert(retryTask->getTaskId()==1);
-    std::cout << "✅ 发送失败后任务保持 PENDING 并重新入队"<< std::endl;
+    std::cout << " 发送失败后任务保持 PENDING 并重新入队"<< std::endl;
 }
 }//namespace
 
@@ -54,7 +54,7 @@ int main(){
     testTaskIsReturnedWhenSendFails();
 
     std::cout << "========================================" << std::endl;
-    std::cout << "  ✅ 所有测试通过！" << std::endl;
+    std::cout << "   所有测试通过！" << std::endl;
     std::cout << "========================================" << std::endl;
 
     return 0;

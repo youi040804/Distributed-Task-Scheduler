@@ -28,7 +28,7 @@ int main() {
         std::cerr << "Master 启动失败！" << std::endl;
         return 1;
     }
-    std::cout << "✅ Master 启动成功，监听端口 8080" << std::endl;
+    std::cout << " Master 启动成功，监听端口 8080" << std::endl;
     std::cout << std::endl;
 
     // 2. 在后台线程运行 Master 主循环
@@ -36,7 +36,7 @@ int main() {
     std::thread master_thread([&master]() {
         master.run();
     });
-    std::cout << "✅ Master 主循环线程已启动" << std::endl;
+    std::cout << " Master 主循环线程已启动" << std::endl;
     std::cout << std::endl;
 
     // 给 Master 一点时间启动
@@ -49,7 +49,7 @@ int main() {
         std::cerr << "Worker 注册失败！" << std::endl;
         return 1;
     }
-    std::cout << "✅ Worker 注册成功" << std::endl;
+    std::cout << " Worker 注册成功" << std::endl;
     std::cout << std::endl;
 
     // 等待 Master 处理注册消息
@@ -63,7 +63,7 @@ int main() {
         return 1;
     }
     auto time_before = info_before->getLastHeartbeatTime();
-    std::cout << "✅ 注册后心跳时间: " << time_before.time_since_epoch().count() << std::endl;
+    std::cout << " 注册后心跳时间: " << time_before.time_since_epoch().count() << std::endl;
     std::cout << std::endl;
 
     // 5. Worker 发送心跳
@@ -72,7 +72,7 @@ int main() {
         std::cerr << "发送心跳失败！" << std::endl;
         return 1;
     }
-    std::cout << "✅ 心跳消息已发送" << std::endl;
+    std::cout << " 心跳消息已发送" << std::endl;
     std::cout << std::endl;
 
     // 等待 Master 处理心跳
@@ -90,7 +90,7 @@ int main() {
     std::cout << "   心跳后时间: " << time_after.time_since_epoch().count() << std::endl;
 
     if (time_after > time_before) {
-        std::cout << "✅ 心跳时间已更新！" << std::endl;
+        std::cout << " 心跳时间已更新！" << std::endl;
     } else {
         std::cout << "❌ 心跳时间未更新！" << std::endl;
         return 1;
@@ -100,7 +100,7 @@ int main() {
     // 7. 验证 Worker 存活状态
     std::cout << "[Step 7] 验证 Worker 存活状态..." << std::endl;
     if (info_after->isAlive()) {
-        std::cout << "✅ Worker 存活状态: 存活" << std::endl;
+        std::cout << " Worker 存活状态: 存活" << std::endl;
     } else {
         std::cout << "❌ Worker 存活状态: 已死亡（错误！）" << std::endl;
         return 1;
@@ -110,11 +110,11 @@ int main() {
     // 8. 清理
     std::cout << "[Step 8] 清理资源..." << std::endl;
     master_thread.detach();
-    std::cout << "✅ 清理完成" << std::endl;
+    std::cout << " 清理完成" << std::endl;
     std::cout << std::endl;
 
     std::cout << "========================================" << std::endl;
-    std::cout << "  ✅ 所有测试通过！" << std::endl;
+    std::cout << "   所有测试通过！" << std::endl;
     std::cout << "========================================" << std::endl;
 
     return 0;

@@ -28,7 +28,7 @@ int main() {
         std::cerr << "Master 启动失败！" << std::endl;
         return 1;
     }
-    std::cout << "✅ Master 启动成功，监听端口 8080" << std::endl;
+    std::cout << " Master 启动成功，监听端口 8080" << std::endl;
     std::cout << std::endl;
 
     // 2. 在后台线程运行 Master 主循环
@@ -36,7 +36,7 @@ int main() {
     std::thread master_thread([&master]() {
         master.run();
     });
-    std::cout << "✅ Master 主循环线程已启动" << std::endl;
+    std::cout << " Master 主循环线程已启动" << std::endl;
     std::cout << std::endl;
 
     // 给 Master 一点时间启动
@@ -57,7 +57,7 @@ int main() {
     std::cout << "   Worker ID: " << info.worker_id << std::endl;
     std::cout << "   Worker IP: " << info.ip << std::endl;
     std::cout << "   Worker Port: " << info.port << std::endl;
-    std::cout << "✅ 注册消息构造完成" << std::endl;
+    std::cout << " 注册消息构造完成" << std::endl;
     std::cout << std::endl;
 
     // 4. Worker 连接 Master
@@ -67,7 +67,7 @@ int main() {
         std::cerr << "Worker 连接 Master 失败！" << std::endl;
         return 1;
     }
-    std::cout << "✅ Worker 连接 Master 成功" << std::endl;
+    std::cout << " Worker 连接 Master 成功" << std::endl;
     std::cout << std::endl;
 
     // 5. Worker 发送注册消息
@@ -77,13 +77,13 @@ int main() {
         std::cerr << "发送注册消息失败！" << std::endl;
         return 1;
     }
-    std::cout << "✅ 注册消息已发送" << std::endl;
+    std::cout << " 注册消息已发送" << std::endl;
     std::cout << std::endl;
 
     // 6. 等待 Master 处理消息
     std::cout << "[Step 6] 等待 Master 处理消息..." << std::endl;
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    std::cout << "✅ 等待完成" << std::endl;
+    std::cout << " 等待完成" << std::endl;
     std::cout << std::endl;
 
     // 7. 验证 Worker 是否注册成功
@@ -110,11 +110,11 @@ int main() {
     if(master_thread.joinable()){
         master_thread.join();
     }
-    std::cout << "✅ 清理完成" << std::endl;
+    std::cout << " 清理完成" << std::endl;
     std::cout << std::endl;
 
     std::cout << "========================================" << std::endl;
-    std::cout << "  ✅ 所有测试通过！" << std::endl;
+    std::cout << "   所有测试通过！" << std::endl;
     std::cout << "========================================" << std::endl;
 
     return 0;

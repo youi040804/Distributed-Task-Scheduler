@@ -76,7 +76,7 @@ int main(){
                               std::chrono::seconds(2))) {
         std::cerr << "❌ Master 未在规定时间内记录 Worker" << std::endl;
     } else {
-        std::cout << "✅ Worker 注册成功" << std::endl;
+        std::cout << " Worker 注册成功" << std::endl;
 
         std::cout << "[Step 3] Client 提交空 payload 任务..." << std::endl;
         client.setMasterAddress("127.0.0.1", MASTER_PORT);
@@ -123,7 +123,7 @@ int main(){
     assert(passed);
 
     std::cout << "========================================" << std::endl;
-    std::cout << "  ✅ 任务重试 3 次后最终 FAILED" << std::endl;
+    std::cout << "   任务重试 3 次后最终 FAILED" << std::endl;
     std::cout << "========================================" << std::endl;
 
     return 0;

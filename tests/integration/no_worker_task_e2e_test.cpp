@@ -93,7 +93,7 @@ int main(){
     assert(passed);
 
     std::cout << "========================================" << std::endl;
-    std::cout << "  ✅ 无可用 Worker 时任务保持 PENDING" << std::endl;
+    std::cout << "   无可用 Worker 时任务保持 PENDING" << std::endl;
     std::cout << "========================================" << std::endl;
 
     return 0;

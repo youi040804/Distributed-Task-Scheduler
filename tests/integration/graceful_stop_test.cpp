@@ -63,7 +63,7 @@ int main() {
     assert(masterStopCost<MAX_STOP_TIME);
 
     std::cout << "========================================" << std::endl;
-    std::cout << "  ✅ Worker 与 Master 均可快速停止"<< std::endl;
+    std::cout << "   Worker 与 Master 均可快速停止"<< std::endl;
     std::cout << "========================================" << std::endl;
 
     return 0;

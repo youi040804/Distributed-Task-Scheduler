@@ -28,7 +28,7 @@ int main() {
         std::cerr << "Master 启动失败！" << std::endl;
         return 1;
     }
-    std::cout << "✅ Master 启动成功，监听端口 8080" << std::endl;
+    std::cout << " Master 启动成功，监听端口 8080" << std::endl;
     std::cout << "   超时阈值: " << HEARTBEAT_TIMEOUT << " 秒" << std::endl;
     std::cout << std::endl;
 
@@ -37,7 +37,7 @@ int main() {
     std::thread master_thread([&master]() {
         master.run();
     });
-    std::cout << "✅ Master 主循环线程已启动" << std::endl;
+    std::cout << " Master 主循环线程已启动" << std::endl;
     std::cout << std::endl;
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -49,7 +49,7 @@ int main() {
         std::cerr << "Worker 注册失败！" << std::endl;
         return 1;
     }
-    std::cout << "✅ Worker 注册成功" << std::endl;
+    std::cout << " Worker 注册成功" << std::endl;
     std::cout << std::endl;
 
     // 等待 Master 处理注册
@@ -62,7 +62,7 @@ int main() {
         std::cerr << "Worker 未在 Manager 中找到！" << std::endl;
         return 1;
     }
-    std::cout << "✅ Worker 已注册，初始状态:" << std::endl;
+    std::cout << " Worker 已注册，初始状态:" << std::endl;
     std::cout << "   alive = " << (info_before->isAlive() ? "true" : "false") << std::endl;
     std::cout << std::endl;
 
@@ -72,7 +72,7 @@ int main() {
         std::cerr << "发送心跳失败！" << std::endl;
         return 1;
     }
-    std::cout << "✅ 心跳已发送" << std::endl;
+    std::cout << " 心跳已发送" << std::endl;
     std::cout << std::endl;
 
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
@@ -84,7 +84,7 @@ int main() {
         std::cerr << "Worker 未在 Manager 中找到！" << std::endl;
         return 1;
     }
-    std::cout << "✅ 心跳已更新，当前状态:" << std::endl;
+    std::cout << " 心跳已更新，当前状态:" << std::endl;
     std::cout << "   alive = " << (info_after_heartbeat->isAlive() ? "true" : "false") << std::endl;
     std::cout << std::endl;
 
@@ -100,7 +100,7 @@ int main() {
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     std::cout << std::endl;
-    std::cout << "✅ 等待完成" << std::endl;
+    std::cout << " 等待完成" << std::endl;
     std::cout << std::endl;
 
     // 8. 验证 Worker 已被标记为死亡
@@ -112,7 +112,7 @@ int main() {
     }
 
     if (!info_final->isAlive()) {
-        std::cout << "✅ Worker 已被标记为死亡 (alive = false)" << std::endl;
+        std::cout << " Worker 已被标记为死亡 (alive = false)" << std::endl;
     } else {
         std::cout << "❌ Worker 仍为存活状态 (alive = true)，超时检测失败！" << std::endl;
         return 1;
@@ -125,11 +125,11 @@ int main() {
     if (master_thread.joinable()) {
         master_thread.join();
     }
-    std::cout << "✅ 清理完成" << std::endl;
+    std::cout << " 清理完成" << std::endl;
     std::cout << std::endl;
 
     std::cout << "========================================" << std::endl;
-    std::cout << "  ✅ 所有测试通过！" << std::endl;
+    std::cout << "   所有测试通过！" << std::endl;
     std::cout << "========================================" << std::endl;
 
     return 0;
