@@ -7,7 +7,9 @@
 #include <netinet/in.h>
 #include<string>
 #include <mutex>
+#include <vector> 
 #include "common/Message.h"
+#include "network/FrameDecoder.h"
 
 namespace dts{
 class Connection{
@@ -16,9 +18,14 @@ private:
     sockaddr_in peer_addr_;
     // 保证同一个 Connection 上完整 Message 的发送不会被其他线程插入
     std::mutex send_mutex_;
-    
+
+    FrameDecoder frame_decoder_;
+    bool receive_error_ = false;
+
     //辅助函数-读满指定字节数
     bool recvExact(char*buffer,size_t length);
+    
+
 
 public:
 
@@ -31,6 +38,9 @@ public:
     Message receiveMessage();
     std::string recv();//底层recv
 
+    std::vector<Message> receiveAvailable();
+    bool hasReceiveError() const;
+    
     bool setNonBlocking();
     
     void disconnect();

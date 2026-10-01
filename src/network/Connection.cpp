@@ -8,6 +8,8 @@
 #include<optional>// for std::nullopt
 #include <limits>
 #include <fcntl.h> // fcntl, F_GETFL, F_SETFL, O_NONBLOCK
+#include <cerrno> // errno, EAGAIN, EWOULDBLOCK
+#include <vector> 
 #include"network/Connection.h"
 #include"common/Protocol.h"
 namespace dts{
@@ -117,7 +119,7 @@ namespace dts{
       return header+data;
 
     }
-    
+
     bool Connection::setNonBlocking() {
         if (fd_ < 0) {
             return false;
@@ -133,6 +135,65 @@ namespace dts{
         }
 
         return true;
+    }
+
+    std::vector<Message> Connection::receiveAvailable() {
+        std::vector<Message> messages;
+
+        if (fd_ < 0 || receive_error_) {
+            return messages;
+        }
+
+        char buffer[4096];
+
+        while (true) {
+            const ssize_t n = ::recv(fd_, buffer, sizeof(buffer), 0);
+
+            if (n > 0) {
+                // 本次收到的字节交给增量解帧器
+                const std::string data( buffer, static_cast<std::size_t>(n) );
+
+                auto decoded = frame_decoder_.feed(data);
+
+                // 把本次解析出的所有完整 Message 汇总起来
+                messages.insert( messages.end(), decoded.begin(), decoded.end() );
+
+                // 协议格式错误
+                if (frame_decoder_.hasError()) {
+                    receive_error_ = true;
+                    break;
+                }
+
+                // 继续 recv，直到把当前已经到达的数据读干净
+                continue;
+            }
+
+            if (n == 0) {
+                // 对端执行了正常关闭
+                receive_error_ = true;
+                break;
+            }
+
+            // n == -1
+            if (errno == EINTR) {
+                // 被信号中断，不代表连接有问题，重新 recv
+                continue;
+            }
+
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                // 非阻塞 socket 当前已经没有更多数据可读,正常结束，不是错误
+                break;
+            }
+
+            receive_error_ = true;
+            break;
+        }
+
+        return messages;
+    }
+
+    bool Connection::hasReceiveError() const {
+        return receive_error_;
     }
 
     void Connection::disconnect(){
