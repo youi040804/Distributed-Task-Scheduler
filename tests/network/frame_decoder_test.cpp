@@ -41,6 +41,7 @@ void testPartialFrame() {
     const auto messages = decoder.feed(frame.substr(0, split));
     assert(messages.empty());
     assert(decoder.bufferedSize() == split);
+    assert(!decoder.hasError());
 }
 
 // 3. 半包补齐后应该得到完整消息
@@ -122,6 +123,7 @@ void testOversizedFrame() {
 
     assert(messages.empty());
     assert(decoder.bufferedSize() == 0);
+    assert(decoder.hasError());
 }
 
 } // namespace

@@ -15,9 +15,13 @@ public:
 
     // 返回当前残留的、不足以组成完整帧的字节数
     std::size_t bufferedSize() const;
+    
+    bool hasError() const;
 
 private:
     std::string buffer_;
+    bool error_ = false;
+
 };
 
 } // namespace dts

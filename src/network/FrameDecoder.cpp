@@ -14,6 +14,9 @@ constexpr std::size_t MAX_MESSAGE_SIZE = 1024 * 1024; // 1 MB
 } // namespace
 
 std::vector<Message> FrameDecoder::feed(const std::string& data) {
+    if (error_) {
+        return {};
+    }
     // 本次 recv() 得到的数据先追加到之前残留的数据后面
     buffer_.append(data);
 
@@ -30,8 +33,9 @@ std::vector<Message> FrameDecoder::feed(const std::string& data) {
 
         if (firstDelimiter == 0) {
             // length 不能为空
-            buffer_.clear();
-            break;
+                error_ = true;
+                buffer_.clear();
+                break;
         }
 
         // 2. 找 type 后面的第二个 '|'
@@ -55,10 +59,12 @@ std::vector<Message> FrameDecoder::feed(const std::string& data) {
 
             // length 字段必须全部由数字组成
             if (parsedLength != firstDelimiter || dataLength > MAX_MESSAGE_SIZE) {
+                error_ = true;
                 buffer_.clear();
                 break;
             }
         } catch (const std::exception&) {
+            error_ = true;
             buffer_.clear();
             break;
         }
@@ -67,6 +73,7 @@ std::vector<Message> FrameDecoder::feed(const std::string& data) {
         const std::size_t headerLength = secondDelimiter + 1;
 
         if (dataLength > std::numeric_limits<std::size_t>::max() - headerLength) {
+            error_ = true;
             buffer_.clear();
             break;
         }
@@ -96,6 +103,10 @@ std::vector<Message> FrameDecoder::feed(const std::string& data) {
 
 std::size_t FrameDecoder::bufferedSize() const {
     return buffer_.size();
+}
+
+bool FrameDecoder::hasError() const {
+    return error_;
 }
 
 } // namespace dts
