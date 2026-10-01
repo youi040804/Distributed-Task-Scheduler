@@ -17,6 +17,11 @@ public:
     explicit TCPServer(int port);
     bool start();
     std::shared_ptr<Connection> acceptConnection();
+
+    int listenFd() const;
+    bool setListenNonBlocking();
+    std::vector<std::shared_ptr<Connection>> acceptAvailable();
+    
     void stop();
 
 };

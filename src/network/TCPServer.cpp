@@ -6,6 +6,8 @@
 #include<sys/socket.h>
 #include<sys/select.h>
 #include<iostream>
+#include <fcntl.h> // fcntl, F_GETFL, F_SETFL, O_NONBLOCK
+#include <cerrno> // errno, EINTR, EAGAIN, EWOULDBLOCK
 #include"network/TCPServer.h"
 namespace dts{
 
@@ -74,6 +76,71 @@ namespace dts{
         return connections_[client_fd];
     }
 
+    int TCPServer::listenFd() const {
+        return listen_fd_;
+    }
+
+    bool TCPServer::setListenNonBlocking() {
+        if (listen_fd_ < 0) {
+            return false;
+        }
+
+        const int flags = ::fcntl( listen_fd_, F_GETFL, 0 );
+        if (flags == -1) {
+            return false;
+        }
+
+        if (::fcntl( listen_fd_, F_SETFL, flags | O_NONBLOCK ) == -1) {
+            return false;
+        }
+
+        return true;
+    }
+
+    std::vector<std::shared_ptr<Connection>> TCPServer::acceptAvailable() {
+        std::vector<std::shared_ptr<Connection>> accepted_connections;
+
+        if (listen_fd_ < 0) {
+            return accepted_connections;
+        }
+
+        while (true) {
+            sockaddr_in client_addr{};
+            socklen_t client_len = sizeof(client_addr);
+
+            const int client_fd = ::accept( listen_fd_, 
+                reinterpret_cast<sockaddr*>(&client_addr), &client_len );
+
+            if (client_fd >= 0) {
+                auto connection = std::make_shared<Connection>(client_fd, client_addr);
+
+                if (!connection->setNonBlocking()) {
+                    connection->disconnect();
+                    continue;
+                }
+
+                connections_[client_fd] = connection;
+                accepted_connections.push_back(connection);
+
+                continue;
+            }
+
+            // accept 被信号打断，重新尝试
+            if (errno == EINTR) {
+                continue;
+            }
+
+            // non-blocking listen socket 的 accept queue 已经取空
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                break;
+            }
+
+            // 其他 accept 错误：结束本轮
+            break;
+        }
+
+        return accepted_connections;
+    }
     void TCPServer::stop(){
         for(auto& pair:connections_){
             pair.second->disconnect();

@@ -280,6 +280,15 @@ add_executable(epoll_poller_test
 target_link_libraries(epoll_poller_test
     dts_core
 )
+
+add_executable(nonblocking_accept_test
+    tests/network/nonblocking_accept_test.cpp
+)
+
+target_link_libraries(nonblocking_accept_test
+    dts_core
+)
+
 # ========================
 # CTest registration
 # ========================
@@ -445,5 +454,13 @@ add_test(
 
 set_tests_properties(
     epoll_poller_test
+    PROPERTIES TIMEOUT 5
+)
+add_test(
+    NAME nonblocking_accept_test
+    COMMAND nonblocking_accept_test
+)
+set_tests_properties(
+    nonblocking_accept_test
     PROPERTIES TIMEOUT 5
 )
