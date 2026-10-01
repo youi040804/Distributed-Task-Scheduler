@@ -2,9 +2,9 @@
 #include <iostream>
 #include <string>
 #include <vector>  
-#include "client/Client.h"
 #include <chrono>  
 #include <thread>  
+#include "client/Client.h"
 namespace {
 
 void printUsage(const char* program) {

@@ -46,6 +46,7 @@ set(DTS_CORE_SRC
     src/network/Connection.cpp
     src/network/TCPClient.cpp
     src/network/TCPServer.cpp
+    src/network/FrameDecoder.cpp
 
     # master
     src/master/Master.cpp
@@ -257,6 +258,13 @@ add_executable(dts_benchmark
 target_link_libraries(dts_benchmark
     dts_core
 )
+add_executable(frame_decoder_test
+    tests/network/frame_decoder_test.cpp
+)
+
+target_link_libraries(frame_decoder_test
+    dts_core
+)
 # ========================
 # CTest registration
 # ========================
@@ -395,5 +403,14 @@ add_test(
 
 set_tests_properties(
     worker_dedup_test
+    PROPERTIES TIMEOUT 5
+)
+add_test(
+    NAME frame_decoder_test
+    COMMAND frame_decoder_test
+)
+
+set_tests_properties(
+    frame_decoder_test
     PROPERTIES TIMEOUT 5
 )
