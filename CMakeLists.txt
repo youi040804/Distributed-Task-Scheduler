@@ -48,6 +48,7 @@ set(DTS_CORE_SRC
     src/network/TCPServer.cpp
     src/network/FrameDecoder.cpp
     src/network/EpollPoller.cpp
+    src/network/TCPReactor.cpp
 
     # master
     src/master/Master.cpp
@@ -288,6 +289,13 @@ add_executable(nonblocking_accept_test
 target_link_libraries(nonblocking_accept_test
     dts_core
 )
+add_executable(tcp_reactor_test
+    tests/network/tcp_reactor_test.cpp
+)
+
+target_link_libraries(tcp_reactor_test
+    dts_core
+)
 
 # ========================
 # CTest registration
@@ -462,5 +470,14 @@ add_test(
 )
 set_tests_properties(
     nonblocking_accept_test
+    PROPERTIES TIMEOUT 5
+)
+add_test(
+    NAME tcp_reactor_test
+    COMMAND tcp_reactor_test
+)
+
+set_tests_properties(
+    tcp_reactor_test
     PROPERTIES TIMEOUT 5
 )

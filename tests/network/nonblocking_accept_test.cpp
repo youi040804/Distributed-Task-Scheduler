@@ -48,6 +48,12 @@ void testAcceptAvailable() {
 
     assert(connections.size() == 3);
 
+    const int first_fd = connections[0]->fd();
+    const auto found = server.getConnection(first_fd);
+
+    assert(found);
+    assert(found->fd() == first_fd);
+
     // acceptAvailable 创建出来的 Connection也必须处于 non-blocking 模式
         for (const auto& connection : connections) {
         assert(connection);
@@ -62,6 +68,10 @@ void testAcceptAvailable() {
     const auto empty = server.acceptAvailable();
     assert(empty.empty());
 
+    server.removeConnection(first_fd);
+    assert(server.getConnection(first_fd) == nullptr);
+    assert(connections[0]->fd() == -1);
+    
     ::close(client1);
     ::close(client2);
     ::close(client3);

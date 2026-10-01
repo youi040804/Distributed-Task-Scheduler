@@ -141,6 +141,28 @@ namespace dts{
 
         return accepted_connections;
     }
+
+    std::shared_ptr<Connection> TCPServer::getConnection(int fd) const {
+        const auto it = connections_.find(fd);
+
+        if (it == connections_.end()) {
+            return nullptr;
+        }
+
+        return it->second;
+    }
+
+    void TCPServer::removeConnection(int fd) {
+        const auto it = connections_.find(fd);
+
+        if (it == connections_.end()) {
+            return;
+        }
+
+        it->second->disconnect();
+        connections_.erase(it);
+    }
+    
     void TCPServer::stop(){
         for(auto& pair:connections_){
             pair.second->disconnect();

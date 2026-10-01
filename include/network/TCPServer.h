@@ -22,6 +22,8 @@ public:
     bool setListenNonBlocking();
     std::vector<std::shared_ptr<Connection>> acceptAvailable();
     
+    std::shared_ptr<Connection> getConnection(int fd) const;
+    void removeConnection(int fd);
     void stop();
 
 };
