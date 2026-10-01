@@ -33,9 +33,9 @@ std::vector<Message> FrameDecoder::feed(const std::string& data) {
 
         if (firstDelimiter == 0) {
             // length 不能为空
-                error_ = true;
-                buffer_.clear();
-                break;
+            error_ = true;
+            buffer_.clear();
+            break;
         }
 
         // 2. 找 type 后面的第二个 '|'

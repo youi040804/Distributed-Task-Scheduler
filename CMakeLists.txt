@@ -265,6 +265,13 @@ add_executable(frame_decoder_test
 target_link_libraries(frame_decoder_test
     dts_core
 )
+add_executable(nonblocking_connection_test
+    tests/network/nonblocking_connection_test.cpp
+)
+
+target_link_libraries(nonblocking_connection_test
+    dts_core
+)
 # ========================
 # CTest registration
 # ========================
@@ -412,5 +419,14 @@ add_test(
 
 set_tests_properties(
     frame_decoder_test
+    PROPERTIES TIMEOUT 5
+)
+add_test(
+    NAME nonblocking_connection_test
+    COMMAND nonblocking_connection_test
+)
+
+set_tests_properties(
+    nonblocking_connection_test
     PROPERTIES TIMEOUT 5
 )

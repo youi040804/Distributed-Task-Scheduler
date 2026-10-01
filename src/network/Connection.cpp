@@ -7,6 +7,7 @@
 #include<stdexcept> // for std::runtime_error
 #include<optional>// for std::nullopt
 #include <limits>
+#include <fcntl.h> // fcntl, F_GETFL, F_SETFL, O_NONBLOCK
 #include"network/Connection.h"
 #include"common/Protocol.h"
 namespace dts{
@@ -115,6 +116,23 @@ namespace dts{
       //保持recv()现有“返回完整原始协议字符串”的接口
       return header+data;
 
+    }
+    
+    bool Connection::setNonBlocking() {
+        if (fd_ < 0) {
+            return false;
+        }
+
+        const int flags = ::fcntl(fd_, F_GETFL, 0);
+        if (flags == -1) {
+            return false;
+        }
+
+        if (::fcntl(fd_, F_SETFL, flags | O_NONBLOCK) == -1) {
+            return false;
+        }
+
+        return true;
     }
 
     void Connection::disconnect(){

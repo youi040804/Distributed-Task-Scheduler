@@ -31,8 +31,11 @@ public:
     Message receiveMessage();
     std::string recv();//底层recv
 
+    bool setNonBlocking();
+    
     void disconnect();
     int fd()const;
+
 
 };
 }
