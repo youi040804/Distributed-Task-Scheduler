@@ -47,6 +47,7 @@ set(DTS_CORE_SRC
     src/network/TCPClient.cpp
     src/network/TCPServer.cpp
     src/network/FrameDecoder.cpp
+    src/network/EpollPoller.cpp
 
     # master
     src/master/Master.cpp
@@ -272,6 +273,13 @@ add_executable(nonblocking_connection_test
 target_link_libraries(nonblocking_connection_test
     dts_core
 )
+add_executable(epoll_poller_test
+    tests/network/epoll_poller_test.cpp
+)
+
+target_link_libraries(epoll_poller_test
+    dts_core
+)
 # ========================
 # CTest registration
 # ========================
@@ -428,5 +436,14 @@ add_test(
 
 set_tests_properties(
     nonblocking_connection_test
+    PROPERTIES TIMEOUT 5
+)
+add_test(
+    NAME epoll_poller_test
+    COMMAND epoll_poller_test
+)
+
+set_tests_properties(
+    epoll_poller_test
     PROPERTIES TIMEOUT 5
 )
