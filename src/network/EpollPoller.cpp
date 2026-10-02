@@ -34,6 +34,17 @@ bool EpollPoller::add(int fd) {
 
     return ::epoll_ctl( epoll_fd_, EPOLL_CTL_ADD, fd, &event ) == 0;
 }
+bool EpollPoller::modify(int fd, uint32_t events) {
+    if (epoll_fd_ < 0 || fd < 0) {
+        return false;
+    }
+
+    epoll_event event{};
+    event.events = events;
+    event.data.fd = fd;
+
+    return ::epoll_ctl( epoll_fd_, EPOLL_CTL_MOD, fd, &event ) == 0;
+}
 
 bool EpollPoller::remove(int fd) {
     if (epoll_fd_ < 0 || fd < 0) {
@@ -42,12 +53,11 @@ bool EpollPoller::remove(int fd) {
 
     return ::epoll_ctl( epoll_fd_, EPOLL_CTL_DEL, fd, nullptr ) == 0;
 }
-
-std::vector<int> EpollPoller::wait(int timeout_ms) {
-    std::vector<int> ready_fds;
-
+std::vector<EpollEvent> EpollPoller::wait(int timeout_ms){
+   
+    std::vector<EpollEvent> ready_events;
     if (epoll_fd_ < 0) {
-        return ready_fds;
+        return ready_events;
     }
 
     std::vector<epoll_event> events(
@@ -63,16 +73,20 @@ std::vector<int> EpollPoller::wait(int timeout_ms) {
     } while (ready_count < 0 && errno == EINTR);
 
     if (ready_count <= 0) {
-        return ready_fds;
+        return ready_events;
     }
 
-    ready_fds.reserve( static_cast<std::size_t>(ready_count) );
+    ready_events.reserve(static_cast<std::size_t>(ready_count) );
 
     for (int i = 0; i < ready_count; ++i) {
-        ready_fds.push_back(events[i].data.fd);
+        EpollEvent event;
+
+        event.fd = events[i].data.fd;
+        event.events = events[i].events;
+        ready_events.push_back(event);
     }
 
-    return ready_fds;
+    return ready_events;
 }
 
 } // namespace dts

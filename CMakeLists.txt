@@ -296,7 +296,14 @@ add_executable(tcp_reactor_test
 target_link_libraries(tcp_reactor_test
     dts_core
 )
+add_executable(nonblocking_output_test
+    tests/network/nonblocking_output_test.cpp
+)
 
+target_link_libraries(nonblocking_output_test
+    PRIVATE
+    dts_core
+)
 # ========================
 # CTest registration
 # ========================
@@ -479,5 +486,14 @@ add_test(
 
 set_tests_properties(
     tcp_reactor_test
+    PROPERTIES TIMEOUT 5
+)
+add_test(
+    NAME nonblocking_output_test
+    COMMAND nonblocking_output_test
+)
+
+set_tests_properties(
+    nonblocking_output_test
     PROPERTIES TIMEOUT 5
 )

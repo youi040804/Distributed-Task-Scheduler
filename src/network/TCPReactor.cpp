@@ -42,10 +42,9 @@ TCPReactor::pollOnce(int timeout_ms) {
         return received_messages;
     }
 
-    const auto ready_fds = poller_.wait(timeout_ms);
-
-    for (const int fd : ready_fds) {
-
+    const auto ready_events = poller_.wait(timeout_ms);
+    for (const auto& event : ready_events) {
+        const int fd = event.fd;
         // ① listening socket ready：把 accept queue drain 到 EAGAIN
         if (fd == server_.listenFd()) {
 

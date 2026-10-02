@@ -196,6 +196,61 @@ namespace dts{
         return receive_error_;
     }
 
+    bool Connection::hasPendingOutput() const {
+        std::lock_guard<std::mutex> lock(send_mutex_);
+
+        return output_offset_ < output_buffer_.size();
+    }
+
+    bool Connection::queueMessage(const Message& message) {
+        const std::string raw = Protocol::serialize(message);
+
+        std::lock_guard<std::mutex> lock(send_mutex_);
+
+        if (output_offset_ == output_buffer_.size()) {
+            output_buffer_.clear();
+            output_offset_ = 0;
+        }
+
+        output_buffer_.append(raw);
+
+        return true;
+    }
+    bool Connection::flushOutput() {
+        std::lock_guard<std::mutex> lock(send_mutex_);
+
+        while (output_offset_ < output_buffer_.size()) {
+            const char* data = output_buffer_.data() + output_offset_;
+
+            const std::size_t remaining = output_buffer_.size() - output_offset_;
+
+            const ssize_t n = ::send( fd(), data, remaining, MSG_NOSIGNAL );
+
+            if (n > 0) {
+                output_offset_ += static_cast<std::size_t>(n);
+                continue;
+            }
+
+            if (n < 0 && errno == EINTR) {
+                continue;
+            }
+
+            if (n < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+
+                // 不是失败
+                // 只是内核发送缓冲区暂时满了
+                return true;
+            }
+
+            return false;
+        }
+
+        output_buffer_.clear();
+        output_offset_ = 0;
+
+        return true;
+    }
+    
     void Connection::disconnect(){
         int socketfd=fd();
         //socket文件描述符一般不为0
