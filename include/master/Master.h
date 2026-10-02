@@ -51,7 +51,6 @@ public:
     bool handleHeartbeat(const HeartbeatInfo& info);
     int handleTaskSubmit(const TaskSubmitInfo& info);
     TaskStatusInfo handleTaskQuery(const TaskQueryInfo& info);
-    void handleConnection(std::shared_ptr<Connection>conn);
     void handleMessage(const std::shared_ptr<Connection>&conn, const Message&msg);
     
     //新增处理task_result的函数

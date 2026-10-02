@@ -53,13 +53,7 @@ namespace dts{
         scheduler_thread_=std::thread(&Master::schedulerLoop,this);
         return true;
     }
-
-    void Master::handleConnection(std::shared_ptr<Connection> conn){
-        while (running_) {
-            Message msg = conn->receiveMessage();
-            handleMessage(conn, msg);
-        }
-    }
+    
     void Master::handleMessage(const std::shared_ptr<Connection>& conn,const Message& msg){
         switch (msg.header.type) {
             case MessageType::REGISTER_WORKER: {

@@ -1,30 +1,31 @@
-/*
- * TCPServer.h
- * TCP 服务器类，监听端口、接受连接、管理客户端
- */
 #pragma once
 
-#include "Connection.h"
-#include<unordered_map>
-#include<memory>
-namespace dts{
-class TCPServer{
+#include <memory>
+#include <unordered_map>
+#include <vector>
+
+#include "network/Connection.h"
+
+namespace dts {
+
+class TCPServer {
 private:
     int port_;
     int listen_fd_;
-    std::unordered_map<int,std::shared_ptr<Connection>> connections_;
+    std::unordered_map<int, std::shared_ptr<Connection>> connections_;
+
 public:
     explicit TCPServer(int port);
-    bool start();
-    std::shared_ptr<Connection> acceptConnection();
 
+    bool start();
     int listenFd() const;
     bool setListenNonBlocking();
+
     std::vector<std::shared_ptr<Connection>> acceptAvailable();
-    
     std::shared_ptr<Connection> getConnection(int fd) const;
     void removeConnection(int fd);
-    void stop();
 
+    void stop();
 };
-}
+
+} // namespace dts

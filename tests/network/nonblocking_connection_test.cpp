@@ -68,7 +68,7 @@ void testReceiveAvailable() {
     assert(messages[1].data == "second");
 
     // receiveAvailable 最后会读到 EAGAIN，但 EAGAIN 不是连接错误
-    assert(!connection.hasReceiveError());
+    assert(!connection.hasFatalReceiveError());
 
     connection.disconnect();
     ::close(fds[1]);
@@ -99,7 +99,7 @@ void testPartialFrameAcrossReads() {
     assert(firstMessages.empty());
 
     // receiveAvailable() 最终因为 EAGAIN 返回，但半包和 EAGAIN 都不是连接错误
-    assert(!connection.hasReceiveError());
+    assert(!connection.hasFatalReceiveError());
 
     // 第二次再发送剩余部分
     const std::string secondHalf = frame.substr(split);
@@ -114,7 +114,7 @@ void testPartialFrameAcrossReads() {
     assert( secondMessages[0].header.type == dts::MessageType::SUBMIT_TASK );
     assert(secondMessages[0].data == "hello");
 
-    assert(!connection.hasReceiveError());
+    assert(!connection.hasFatalReceiveError());
 
     connection.disconnect();
     ::close(fds[1]);

@@ -108,27 +108,6 @@ target_link_libraries(protocol_test
     dts_core
 )
 
-
-# network server test
-add_executable(network_test_server
-    tests/network/network_test_server.cpp
-)
-
-target_link_libraries(network_test_server
-    dts_core
-)
-
-
-# network client test
-add_executable(network_test_client
-    tests/network/network_test_client.cpp
-)
-
-target_link_libraries(network_test_client
-    dts_core
-)
-
-
 # integration test
 add_executable(register_test
     tests/integration/register_test.cpp

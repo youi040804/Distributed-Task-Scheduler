@@ -61,8 +61,7 @@ TCPReactor::pollOnce(int timeout_ms) {
                 }
 
                 if (!poller_.modify(client_fd, EPOLLIN | EPOLLRDHUP)) {
-                    poller_.remove(client_fd);
-                    server_.removeConnection(client_fd);
+                    removeConnection(client_fd);
                 }
             }
 
@@ -111,15 +110,9 @@ TCPReactor::pollOnce(int timeout_ms) {
         }
 
         if ((event.events & EPOLLERR) != 0) shouldRemove = true;
+        if ((event.events & EPOLLHUP) != 0 && !connection->isPeerReadClosed()) shouldRemove = true;
 
-        if ((event.events & EPOLLHUP) != 0 && !connection->isPeerReadClosed()) {
-            shouldRemove = true;
-        }
-
-        if (shouldRemove) {
-            poller_.remove(fd);
-            server_.removeConnection(fd);
-        }
+        if (shouldRemove) removeConnection(fd);
     }
 
     return received_messages;
@@ -134,7 +127,7 @@ bool TCPReactor::sendMessage(const std::shared_ptr<Connection>& connection, cons
 
     {
         std::lock_guard<std::mutex> lock(pending_write_mutex_);
-        pending_write_fds_.insert(fd);
+        pending_write_connections_.push_back(connection);
     }
 
     return wakeup();
@@ -150,7 +143,6 @@ bool TCPReactor::wakeup() {
 
         if (n == static_cast<ssize_t>(sizeof(value))) return true;
         if (n < 0 && errno == EINTR) continue;
-
         if (n < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) return true;
 
         return false;
@@ -170,24 +162,34 @@ void TCPReactor::handleWakeup() {
         break;
     }
 
-    std::unordered_set<int> pending;
+    std::vector<std::shared_ptr<Connection>> pending;
 
     {
         std::lock_guard<std::mutex> lock(pending_write_mutex_);
-        pending.swap(pending_write_fds_);
+        pending.swap(pending_write_connections_);
     }
 
-    for (const int fd : pending) {
-        const auto connection = server_.getConnection(fd);
-
+    for (const auto& connection : pending) {
         if (!connection) continue;
+
+        const int fd = connection->fd();
+        if (fd < 0) continue;
+
+        const auto current_connection = server_.getConnection(fd);
+
+        // fd 可能已经被操作系统复用，必须验证 Connection 身份
+        if (current_connection != connection) continue;
         if (!connection->hasPendingOutput()) continue;
 
         if (!poller_.modify(fd, EPOLLIN | EPOLLOUT | EPOLLRDHUP)) {
-            poller_.remove(fd);
-            server_.removeConnection(fd);
+            removeConnection(fd);
         }
     }
+}
+
+void TCPReactor::removeConnection(int fd) {
+    poller_.remove(fd);
+    server_.removeConnection(fd);
 }
 
 TCPReactor::~TCPReactor() {
