@@ -24,6 +24,7 @@ using Clock = std::chrono::steady_clock;
 
 struct ConnectionState {
     int fd = -1;
+    int expected_task_id = 0;
     bool connected = false;
     bool failed = false;
     bool request_in_flight = false;
@@ -82,6 +83,7 @@ void queueQuery(ConnectionState& state, int task_id) {
 
     state.output = dts::Protocol::serialize(message);
     state.output_offset = 0;
+    state.expected_task_id = task_id;
     state.request_in_flight = true;
     state.request_start = Clock::now();
     ++state.requests_sent;
@@ -420,6 +422,28 @@ int main(int argc, char* argv[]) {
                                 break;
                             }
 
+                            dts::TaskStatusInfo status;
+
+                            try {
+                                status = dts::Protocol::deserializeTaskStatusInfo(message.data);
+                            } catch (...) {
+                                state.failed = true;
+                                request_failed += static_cast<std::uint64_t>(
+                                    requests_per_connection - state.responses_received
+                                );
+                                closeConnection(epoll_fd, state);
+                                break;
+                            }
+
+                            if (status.task_id != state.expected_task_id || status.found) {
+                                state.failed = true;
+                                request_failed += static_cast<std::uint64_t>(
+                                    requests_per_connection - state.responses_received
+                                );
+                                closeConnection(epoll_fd, state);
+                                break;
+                            }
+                            
                             const auto now = Clock::now();
                             latencies_ms.push_back(
                                 std::chrono::duration<double, std::milli>(
