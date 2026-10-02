@@ -305,6 +305,13 @@ add_executable(reactor_peer_close_test
 target_link_libraries(reactor_peer_close_test
     dts_core
 )
+add_executable(dts_request_benchmark
+    apps/request_benchmark_main.cpp
+)
+
+target_link_libraries(dts_request_benchmark
+    dts_core
+)
 # ========================
 # CTest registration
 # ========================
