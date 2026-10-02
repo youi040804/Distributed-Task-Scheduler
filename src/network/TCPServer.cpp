@@ -23,6 +23,13 @@ namespace dts{
             perror("Server socket");
             return false;
         }
+        int reuse = 1;
+
+        if (::setsockopt( listen_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse) )<0){
+            perror("Server setsockopt SO_REUSEADDR");
+            close(listen_fd);
+            return false;
+        }
         // 服务器：绑定自己的地址
         sockaddr_in addr={};
         addr.sin_family=AF_INET;

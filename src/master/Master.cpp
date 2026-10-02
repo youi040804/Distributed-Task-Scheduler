@@ -18,7 +18,18 @@ namespace dts{
 
         int master_start_result=master_server_->start();
         if(!master_start_result){
-            perror("master start failed");
+            std::cerr << "[Master] server start failed" << std::endl;
+            return false;
+        }
+
+        reactor_ = std::make_unique<TCPReactor>(*master_server_);
+
+        if (!reactor_->start()) {
+            std::cerr << "[Master] failed to start TCP reactor" << std::endl;
+
+            master_server_->stop();
+            reactor_.reset();
+
             return false;
         }
 
@@ -247,10 +258,7 @@ namespace dts{
     void Master::stop(){
         running_=false;
         heartbeat_cv_.notify_all();
-        //关闭监听socket，唤醒阻塞在accept()的Master主线程
-        if(master_server_){
-            master_server_->stop();
-        }
+       
         if(heartbeat_thread_.joinable()){
             heartbeat_thread_.join();
         }
@@ -261,6 +269,9 @@ namespace dts{
 
     Master::~Master() {
         stop();
+        if (master_server_) {
+            master_server_->stop();
+        }
     }
 
 }
