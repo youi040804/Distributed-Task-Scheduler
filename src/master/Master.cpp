@@ -32,80 +32,74 @@ namespace dts{
         return true;
     }
 
-    void Master::handleConnection(std::shared_ptr<Connection>conn){
-        //std::thread把参数conn传递给handleConnection函数
-        //等待收到消息
+    void Master::handleConnection(std::shared_ptr<Connection> conn){
         while (running_) {
             Message msg = conn->receiveMessage();
-            if (msg.header.type == MessageType::UNKNOWN && msg.data.empty()) {
+            handleMessage(conn, msg);
+        }
+    }
+    void Master::handleMessage(const std::shared_ptr<Connection>& conn,const Message& msg){
+        switch (msg.header.type) {
+            case MessageType::REGISTER_WORKER: {
+                WorkerRegisterInfo workerinfo = Protocol::deserializeWorkerInfo(msg.data);
+                handleWorkerRegister(workerinfo,conn);
                 break;
             }
+            case MessageType::HEARTBEAT: {
+                HeartbeatInfo info = Protocol::deserializeHeartbeatInfo(msg.data);
+                handleHeartbeat(info);
+                break;
+            }
+            case MessageType::SUBMIT_TASK: {
+                TaskSubmitInfo info =Protocol::deserializeTaskSubmitInfo(msg.data);
 
-            switch (msg.header.type) {
-                case MessageType::REGISTER_WORKER: {
-                    WorkerRegisterInfo workerinfo = Protocol::deserializeWorkerInfo(msg.data);
-                    handleWorkerRegister(workerinfo,conn);
-                    break;
+                const int task_id =handleTaskSubmit(info);
+
+                TaskSubmitAckInfo ack_info;
+                ack_info.task_id = task_id;
+
+                Message ack_msg;
+                ack_msg.header.type =MessageType::TASK_SUBMIT_ACK;
+
+                ack_msg.data =Protocol::serializeTaskSubmitAckInfo(ack_info);
+
+                if (!conn->sendMessage(ack_msg)) {
+                    std::cerr
+                        << "[Master] Failed to send "
+                        << "TASK_SUBMIT_ACK for Task "
+                        << task_id
+                        << std::endl;
                 }
-                case MessageType::HEARTBEAT: {
-                    HeartbeatInfo info = Protocol::deserializeHeartbeatInfo(msg.data);
-                    handleHeartbeat(info);
-                    break;
+
+                break;
+            }
+            case MessageType::QUERY_TASK: {
+                TaskQueryInfo query_info =Protocol::deserializeTaskQueryInfo(msg.data);
+
+                TaskStatusInfo status_info =handleTaskQuery(query_info);
+
+                Message status_msg;
+                status_msg.header.type = MessageType::TASK_STATUS;
+                status_msg.data =Protocol::serializeTaskStatusInfo(status_info);
+
+                if (!conn->sendMessage(status_msg)) {
+                    std::cerr
+                        << "[Master] Failed to send TASK_STATUS for Task "
+                        << query_info.task_id
+                        << std::endl;
                 }
 
-                case MessageType::SUBMIT_TASK: {
-                    TaskSubmitInfo info =Protocol::deserializeTaskSubmitInfo(msg.data);
-
-                    const int task_id =handleTaskSubmit(info);
-
-                    TaskSubmitAckInfo ack_info;
-                    ack_info.task_id = task_id;
-
-                    Message ack_msg;
-                    ack_msg.header.type =MessageType::TASK_SUBMIT_ACK;
-
-                    ack_msg.data =Protocol::serializeTaskSubmitAckInfo(ack_info);
-
-                    if (!conn->sendMessage(ack_msg)) {
-                        std::cerr
-                            << "[Master] Failed to send "
-                            << "TASK_SUBMIT_ACK for Task "
-                            << task_id
-                            << std::endl;
-                    }
-
-                    break;
-                }
-                case MessageType::QUERY_TASK: {
-                    TaskQueryInfo query_info =Protocol::deserializeTaskQueryInfo(msg.data);
-
-                    TaskStatusInfo status_info =handleTaskQuery(query_info);
-
-                    Message status_msg;
-                    status_msg.header.type = MessageType::TASK_STATUS;
-                    status_msg.data =Protocol::serializeTaskStatusInfo(status_info);
-
-                    if (!conn->sendMessage(status_msg)) {
-                        std::cerr
-                            << "[Master] Failed to send TASK_STATUS for Task "
-                            << query_info.task_id
-                            << std::endl;
-                    }
-
-                    break;
-                }
-                case MessageType::TASK_RESULT: {
-                    TaskResultInfo info = Protocol::deserializeTaskResultInfo(msg.data);
-                    handleTaskResult(info);
-                    break;
-                }
-                default: {
-                    break;
-                }
+                break;
+            }
+            case MessageType::TASK_RESULT: {
+                TaskResultInfo info = Protocol::deserializeTaskResultInfo(msg.data);
+                handleTaskResult(info);
+                break;
+            }
+            default: {
+                break;
             }
         }
-        //退出运行时调用Connection类的disconnect()
-        conn->disconnect();
     }
 
     void Master::handleWorkerRegister(const WorkerRegisterInfo&RegisterInfo,std::shared_ptr<Connection>conn){
@@ -235,14 +229,18 @@ namespace dts{
 
     void Master::run() {
         while (running_) {
-            auto conn = master_server_->acceptConnection();
-
-            if (!conn) {
-                continue;
+            if (!reactor_) {
+                break;
             }
-            //Connection有效，创建一个线程
-            std::thread(&Master::handleConnection,this,conn).detach();//用 std::thread::detach() + 用 running_ 控制退出
 
+            const auto messages = reactor_->pollOnce(200);
+
+            for (const auto& item : messages) {
+                const auto& connection = item.first;
+                const auto& message = item.second;
+
+                handleMessage(connection, message);
+            }
         }
     }
 

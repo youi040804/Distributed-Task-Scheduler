@@ -9,10 +9,12 @@
 #include<condition_variable>
 #include<mutex>
 #include"network/TCPServer.h"
+#include "network/TCPReactor.h"
 #include"common/WorkerInfo.h"
+#include"common/Protocol.h"
+#include "common/Message.h"
 #include "WorkerManager.h"
 #include "utils/Config.h"
-#include"common/Protocol.h"
 #include"master/TaskManager.h"
 #include"Scheduler.h"
 
@@ -28,6 +30,7 @@ private:
     WorkerManager worker_manager_;
     TaskManager task_manager_;
     std::unique_ptr<Scheduler>scheduler_;
+    std::unique_ptr<TCPReactor> reactor_;
 
     //heartbeat线程
     std::thread heartbeat_thread_;
@@ -49,7 +52,8 @@ public:
     int handleTaskSubmit(const TaskSubmitInfo& info);
     TaskStatusInfo handleTaskQuery(const TaskQueryInfo& info);
     void handleConnection(std::shared_ptr<Connection>conn);
-
+    void handleMessage(const std::shared_ptr<Connection>&conn, const Message&msg);
+    
     //新增处理task_result的函数
     bool handleTaskResult(const TaskResultInfo&info);
 
