@@ -156,23 +156,26 @@ int main() {
     assert( second_half_messages[0].second.header.type == dts::MessageType::SUBMIT_TASK );
     assert( second_half_messages[0].second.data == "partial-message" );
 
+
     // ==================================================
-    // 4. 验证 Reactor 的 EPOLLOUT 发送路径
+    // 4. 验证 Reactor 的异步发送路径
     // ==================================================
 
     dts::Message response;
     response.header.type = dts::MessageType::TASK_STATUS;
     response.data = "reactor-output-test";
 
-    // 先把 Message 放入 Connection 的 output buffer
-    assert( server_connection1->queueMessage(response) );
-
+    assert( reactor.sendMessage( server_connection1, response ) );
     assert( server_connection1->hasPendingOutput() );
-    assert( reactor.enableWrite(server_connection1) );
 
-    const auto output_messages = reactor.pollOnce(1000);
+    for(int i = 0; i < 3 && server_connection1->hasPendingOutput(); ++i){
+        const auto output_messages = reactor.pollOnce(1000);
 
-    assert(output_messages.empty());
+        // client1 此时没有向服务端发送新的业务消息，
+        // 因此这些 poll 不应该产生接收消息
+        assert(output_messages.empty());
+    }
+
     assert( !server_connection1->hasPendingOutput() );
 
     // ==================================================
