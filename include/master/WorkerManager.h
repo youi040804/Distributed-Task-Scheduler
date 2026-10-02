@@ -9,21 +9,29 @@
 #include<optional>
 #include<memory>
 #include<vector>
+#include <functional>
 #include"common/WorkerInfo.h"
 #include"common/Message.h"
 #include"network/Connection.h"
 
 namespace dts{
+
 struct WorkerSession{
     WorkerInfo info;
     std::shared_ptr<Connection> connection;
 };
 class WorkerManager{
+public:
+    using SendCallback = std::function<bool
+                        (const std::shared_ptr<Connection>&, const Message&)>;
+
 private:
     std::unordered_map<int,WorkerSession> workers_;//key:workerId,value:WorkerSession
     mutable std::mutex worker_mutex_;
+    SendCallback send_callback_;
 
 public:
+
     void addWorker(WorkerInfo&& worker, std::shared_ptr<Connection> conn);
     bool hasWorker(int workerId)const;
 
@@ -38,7 +46,8 @@ public:
     std::vector<int> getTimeoutWorker();
     bool markWorkerDead(int workerId);
     std::pair<int,size_t> pickLeastLoadedWorker();
-    bool sendTaskToWorker(int workerId,Message&msg);
+    bool sendTaskToWorker( int workerId, const Message& msg );
+    void setSendCallback(SendCallback callback);
 };
 
 

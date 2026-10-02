@@ -33,6 +33,17 @@ namespace dts{
             return false;
         }
 
+        worker_manager_.setSendCallback( [this](
+            const std::shared_ptr<Connection>& connection,
+            const Message& message ){
+                if (!reactor_) {
+                    return false;
+                }
+
+                return reactor_->sendMessage( connection, message );
+            }
+        );
+        
         running_=true;
         scheduler_=std::make_unique<Scheduler>(&task_manager_,&worker_manager_);
 
@@ -74,9 +85,10 @@ namespace dts{
 
                 ack_msg.data =Protocol::serializeTaskSubmitAckInfo(ack_info);
 
-                if (!conn->sendMessage(ack_msg)) {
+              
+                if (!reactor_ || !reactor_->sendMessage(conn, ack_msg)){
                     std::cerr
-                        << "[Master] Failed to send "
+                        << "[Master] Failed to queue "
                         << "TASK_SUBMIT_ACK for Task "
                         << task_id
                         << std::endl;
@@ -93,13 +105,14 @@ namespace dts{
                 status_msg.header.type = MessageType::TASK_STATUS;
                 status_msg.data =Protocol::serializeTaskStatusInfo(status_info);
 
-                if (!conn->sendMessage(status_msg)) {
+                if (!reactor_ || !reactor_->sendMessage( conn, status_msg )){
+
                     std::cerr
-                        << "[Master] Failed to send TASK_STATUS for Task "
+                        << "[Master] Failed to queue "
+                        << "TASK_STATUS for Task "
                         << query_info.task_id
                         << std::endl;
                 }
-
                 break;
             }
             case MessageType::TASK_RESULT: {

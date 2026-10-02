@@ -129,28 +129,40 @@ namespace dts
         return {workerId,LeastLoad};
 
     }
-    bool WorkerManager::sendTaskToWorker(int workerId,Message&msg){
-        std::shared_ptr<Connection>conn;
-        
-        // 锁外发送
-        // 1. 锁住，拿到 connection
+    bool WorkerManager::sendTaskToWorker(int workerId, const Message& msg){
+
+        std::shared_ptr<Connection> connection;
+        SendCallback send_callback;
+
         {
-            std::lock_guard<std::mutex> lock(worker_mutex_);
-            auto it=workers_.find(workerId);
-            if(it==workers_.end()){
+            std::lock_guard<std::mutex> lock( worker_mutex_ );
+            auto it = workers_.find(workerId);
+
+            if (it == workers_.end()) {
                 return false;
             }
-            if(!it->second.info.isAlive()){
+
+            if (!it->second.info.isAlive()) {
                 return false;
             }
-            
-            conn = it->second.connection;  // 复制 shared_ptr
-        }  // ← 释放锁！
-        
-      
-        return conn->sendMessage(msg);
+
+            connection = it->second.connection;
+            send_callback = send_callback_;
+        }
+
+        if (!connection || !send_callback) {
+            return false;
+        }
+
+        // 真正的网络发送仍然在 WorkerManager 锁外进行
+        return send_callback( connection, msg );
     }
 
+    void WorkerManager::setSendCallback( SendCallback callback) {
+        std::lock_guard<std::mutex> lock( worker_mutex_ );
+        
+        send_callback_ = std::move(callback);
+    }
 
 
 } 

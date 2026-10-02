@@ -146,20 +146,6 @@ TCPReactor::pollOnce(int timeout_ms) {
     return received_messages;
 }
 
-bool TCPReactor::enableWrite( const std::shared_ptr<Connection>& connection) {
-
-    if (!connection) {
-        return false;
-    }
-
-    const int fd = connection->fd();
-
-    if (fd < 0) {
-        return false;
-    }
-
-    return poller_.modify( fd, EPOLLIN | EPOLLOUT );
-}
 bool TCPReactor::sendMessage(const std::shared_ptr<Connection>& connection, 
                                 const Message& message) {
 
