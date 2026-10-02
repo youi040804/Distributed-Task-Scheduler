@@ -76,12 +76,14 @@ TCPReactor::pollOnce(int timeout_ms) {
         }
 
         bool shouldRemove = false;
+        bool receivedMessage = false;
 
         if ((event.events & EPOLLIN) != 0) {
             const auto messages = connection->receiveAvailable();
 
             for (const auto& message : messages) {
                 received_messages.emplace_back(connection, message);
+                receivedMessage = true;
             }
 
             if (connection->hasFatalReceiveError()) shouldRemove = true;
@@ -92,6 +94,7 @@ TCPReactor::pollOnce(int timeout_ms) {
 
             for (const auto& message : messages) {
                 received_messages.emplace_back(connection, message);
+                receivedMessage = true;
             }
 
             if (connection->hasFatalReceiveError()) shouldRemove = true;
@@ -108,7 +111,11 @@ TCPReactor::pollOnce(int timeout_ms) {
                 }
             }
         }
-
+        if (!shouldRemove && connection->isPeerReadClosed() 
+            && !receivedMessage && !connection->hasPendingOutput()) {
+            shouldRemove = true;
+        }
+        
         if ((event.events & EPOLLERR) != 0) shouldRemove = true;
         if ((event.events & EPOLLHUP) != 0 && !connection->isPeerReadClosed()) shouldRemove = true;
 

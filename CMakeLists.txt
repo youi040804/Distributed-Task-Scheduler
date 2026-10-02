@@ -95,6 +95,13 @@ add_executable(dts_client
 target_link_libraries(dts_client
     dts_core
 )
+add_executable(dts_connection_benchmark
+    apps/connection_benchmark_main.cpp
+)
+
+target_link_libraries(dts_connection_benchmark
+    dts_core
+)
 # =========================
 # Tests
 # =========================
@@ -289,6 +296,13 @@ add_executable(reactor_half_close_test
 
 target_link_libraries(reactor_half_close_test
     PRIVATE
+    dts_core
+)
+add_executable(reactor_peer_close_test
+    tests/network/reactor_peer_close_test.cpp
+)
+
+target_link_libraries(reactor_peer_close_test
     dts_core
 )
 # ========================
@@ -492,4 +506,8 @@ add_test(
 set_tests_properties(
     reactor_half_close_test
     PROPERTIES TIMEOUT 5
+)
+add_test(
+    NAME reactor_peer_close_test
+    COMMAND reactor_peer_close_test
 )
