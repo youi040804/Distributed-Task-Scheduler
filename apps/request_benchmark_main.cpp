@@ -322,6 +322,10 @@ int main(int argc, char* argv[]) {
     std::uint64_t responses = 0;
     std::uint64_t request_failed = 0;
     std::vector<double> latencies_ms;
+    std::uint64_t slow_requests_over_100ms = 0;
+    std::uint64_t slow_requests_over_1000ms = 0;
+    double latency_max_ms = 0.0;
+
     latencies_ms.reserve(
         static_cast<std::size_t>(connected) *
         static_cast<std::size_t>(requests_per_connection)
@@ -443,13 +447,16 @@ int main(int argc, char* argv[]) {
                                 closeConnection(epoll_fd, state);
                                 break;
                             }
-                            
+
                             const auto now = Clock::now();
-                            latencies_ms.push_back(
-                                std::chrono::duration<double, std::milli>(
-                                    now - state.request_start
-                                ).count()
-                            );
+                            const double latency_ms = std::chrono::duration<double, std::milli>(
+                                now - state.request_start
+                            ).count();
+
+                            latencies_ms.push_back(latency_ms);
+                            latency_max_ms = std::max(latency_max_ms, latency_ms);
+                            if (latency_ms > 100.0) ++slow_requests_over_100ms;
+                            if (latency_ms > 1000.0) ++slow_requests_over_1000ms;
 
                             state.request_in_flight = false;
                             ++state.responses_received;
@@ -521,6 +528,15 @@ int main(int argc, char* argv[]) {
     const std::uint64_t sent_without_response =
         requests_sent > responses ? requests_sent - responses : 0;
 
+    int min_responses_per_connection = requests_per_connection;
+
+    for (const auto& state : states) {
+        if (!state.connected) continue;
+        min_responses_per_connection = std::min(
+            min_responses_per_connection,
+            state.responses_received
+        );
+    }
     for (auto& state : states) closeConnection(epoll_fd, state);
     ::close(epoll_fd);
 
@@ -534,7 +550,7 @@ int main(int argc, char* argv[]) {
     std::cout << "[Request Benchmark] sent_without_response=" << sent_without_response << std::endl;
     std::cout << "[Request Benchmark] connection_elapsed=" << connection_elapsed << " s" << std::endl;
     std::cout << "[Request Benchmark] request_elapsed=" << request_elapsed << " s" << std::endl;
-
+ 
     if (request_elapsed > 0.0) {
         std::cout << "[Request Benchmark] throughput="
                   << static_cast<double>(responses) / request_elapsed
@@ -542,13 +558,15 @@ int main(int argc, char* argv[]) {
     }
 
     if (!latencies_ms.empty()) {
-        std::cout << "[Request Benchmark] latency_p50="
-                  << percentile(latencies_ms, 0.50) << " ms" << std::endl;
-        std::cout << "[Request Benchmark] latency_p95="
-                  << percentile(latencies_ms, 0.95) << " ms" << std::endl;
-        std::cout << "[Request Benchmark] latency_p99="
-                  << percentile(latencies_ms, 0.99) << " ms" << std::endl;
+        std::cout << "[Request Benchmark] latency_p50=" << percentile(latencies_ms, 0.50) << " ms" << std::endl;
+        std::cout << "[Request Benchmark] latency_p95=" << percentile(latencies_ms, 0.95) << " ms" << std::endl;
+        std::cout << "[Request Benchmark] latency_p99=" << percentile(latencies_ms, 0.99) << " ms" << std::endl;
     }
+
+    std::cout << "[Request Benchmark] latency_max=" << latency_max_ms << " ms" << std::endl;
+    std::cout << "[Request Benchmark] slow_requests_over_100ms=" << slow_requests_over_100ms << std::endl;
+    std::cout << "[Request Benchmark] slow_requests_over_1000ms=" << slow_requests_over_1000ms << std::endl;
+    std::cout << "[Request Benchmark] min_responses_per_connection=" << min_responses_per_connection << std::endl;
 
     return connected == connection_count &&
            responses == total_requests &&
