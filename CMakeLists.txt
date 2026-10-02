@@ -304,6 +304,14 @@ target_link_libraries(nonblocking_output_test
     PRIVATE
     dts_core
 )
+add_executable(reactor_half_close_test
+    tests/network/reactor_half_close_test.cpp
+)
+
+target_link_libraries(reactor_half_close_test
+    PRIVATE
+    dts_core
+)
 # ========================
 # CTest registration
 # ========================
@@ -495,5 +503,14 @@ add_test(
 
 set_tests_properties(
     nonblocking_output_test
+    PROPERTIES TIMEOUT 5
+)
+add_test(
+    NAME reactor_half_close_test
+    COMMAND reactor_half_close_test
+)
+
+set_tests_properties(
+    reactor_half_close_test
     PROPERTIES TIMEOUT 5
 )

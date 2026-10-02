@@ -1,11 +1,11 @@
-#include <algorithm>    // std::find_if
 #include <cassert>
 #include <iostream>
 #include <memory>
 #include <string>
-#include <sys/socket.h> // socket, connect, send
-#include <unistd.h>     // close
-#include <arpa/inet.h>  // sockaddr_in, htons, htonl
+#include <vector>
+#include <sys/socket.h>
+#include <unistd.h>
+#include <arpa/inet.h>
 
 #include "common/Message.h"
 #include "common/Protocol.h"
@@ -19,7 +19,6 @@ constexpr int PORT = 19092;
 
 int connectClient() {
     const int fd = ::socket(AF_INET, SOCK_STREAM, 0);
-
     assert(fd >= 0);
 
     sockaddr_in server_addr{};
@@ -27,38 +26,23 @@ int connectClient() {
     server_addr.sin_port = htons(PORT);
     server_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 
-    assert(
-        ::connect(
-            fd,
-            reinterpret_cast<sockaddr*>(&server_addr),
-            sizeof(server_addr)
-        ) == 0
-    );
-
+    assert(::connect(fd, reinterpret_cast<sockaddr*>(&server_addr), sizeof(server_addr)) == 0);
     return fd;
 }
 
-std::string makeFrame( dts::MessageType type, const std::string& data ) {
+std::string makeFrame(dts::MessageType type, const std::string& data) {
     dts::Message message;
     message.header.type = type;
     message.data = data;
-
     return dts::Protocol::serialize(message);
 }
 
-void sendAll( int fd, const std::string& data ) {
+void sendAll(int fd, const std::string& data) {
     std::size_t sent = 0;
 
     while (sent < data.size()) {
-        const ssize_t n = ::send(
-            fd,
-            data.data() + sent,
-            data.size() - sent,
-            0
-        );
-
+        const ssize_t n = ::send(fd, data.data() + sent, data.size() - sent, 0);
         assert(n > 0);
-
         sent += static_cast<std::size_t>(n);
     }
 }
@@ -67,62 +51,46 @@ void sendAll( int fd, const std::string& data ) {
 
 int main() {
     dts::TCPServer server(PORT);
-
     assert(server.start());
 
     dts::TCPReactor reactor(server);
-
     assert(reactor.start());
-
-    // ==================================================
-    // 1. 建立两个客户端连接
-    // ==================================================
 
     const int client1 = connectClient();
     const int client2 = connectClient();
 
-    // listen_fd 应该已经 readable
-    // 第一轮 poll 负责 accept，并把新 Connection 注册进 epoll
     const auto accept_messages = reactor.pollOnce(1000);
-
-    // 这里只发生连接建立，没有业务 Message
     assert(accept_messages.empty());
 
-    // ==================================================
-    // 2. 两个客户端分别发送完整 Message
-    // ==================================================
-
-    const std::string frame1 = makeFrame( dts::MessageType::SUBMIT_TASK, "client-one" );
-    const std::string frame2 = makeFrame( dts::MessageType::QUERY_TASK, "client-two" );
+    const std::string frame1 = makeFrame(dts::MessageType::SUBMIT_TASK, "client-one");
+    const std::string frame2 = makeFrame(dts::MessageType::QUERY_TASK, "client-two");
 
     sendAll(client1, frame1);
     sendAll(client2, frame2);
 
-    const auto messages = reactor.pollOnce(1000);
+    std::vector<std::pair<std::shared_ptr<dts::Connection>, dts::Message>> messages;
+
+    for (int i = 0; i < 3 && messages.size() < 2; ++i) {
+        const auto batch = reactor.pollOnce(1000);
+        messages.insert(messages.end(), batch.begin(), batch.end());
+    }
 
     assert(messages.size() == 2);
 
     bool found_client_one = false;
     bool found_client_two = false;
-
-    // 保存 client1 对应的服务端 Connection
-    // 后面使用它验证 Reactor 的 EPOLLOUT 发送路径
     std::shared_ptr<dts::Connection> server_connection1;
 
     for (const auto& item : messages) {
         const auto& connection = item.first;
         const auto& message = item.second;
 
-        if (
-            message.header.type == dts::MessageType::SUBMIT_TASK && message.data == "client-one"
-        ) {
+        if (message.header.type == dts::MessageType::SUBMIT_TASK && message.data == "client-one") {
             found_client_one = true;
             server_connection1 = connection;
         }
 
-        if (
-            message.header.type == dts::MessageType::QUERY_TASK && message.data == "client-two"
-        ) {
+        if (message.header.type == dts::MessageType::QUERY_TASK && message.data == "client-two") {
             found_client_two = true;
         }
     }
@@ -131,11 +99,7 @@ int main() {
     assert(found_client_two);
     assert(server_connection1 != nullptr);
 
-    // ==================================================
-    // 3. 验证跨两轮 pollOnce() 的半帧
-    // ==================================================
-
-    const std::string partial_frame = makeFrame( dts::MessageType::SUBMIT_TASK, "partial-message" );
+    const std::string partial_frame = makeFrame(dts::MessageType::SUBMIT_TASK, "partial-message");
 
     const std::size_t split = partial_frame.size() / 2;
     const std::string first_half = partial_frame.substr(0, split);
@@ -143,69 +107,44 @@ int main() {
 
     sendAll(client1, first_half);
 
-    // fd 会 readable，但 FrameDecoder 还不能组成完整 Message
     const auto first_half_messages = reactor.pollOnce(1000);
     assert(first_half_messages.empty());
 
-    // Connection 没有销毁，FrameDecoder 中仍保留前半帧
     sendAll(client1, second_half);
 
     const auto second_half_messages = reactor.pollOnce(1000);
-
     assert(second_half_messages.size() == 1);
-    assert( second_half_messages[0].second.header.type == dts::MessageType::SUBMIT_TASK );
-    assert( second_half_messages[0].second.data == "partial-message" );
-
-
-    // ==================================================
-    // 4. 验证 Reactor 的异步发送路径
-    // ==================================================
+    assert(second_half_messages[0].second.header.type == dts::MessageType::SUBMIT_TASK);
+    assert(second_half_messages[0].second.data == "partial-message");
 
     dts::Message response;
     response.header.type = dts::MessageType::TASK_STATUS;
     response.data = "reactor-output-test";
 
-    assert( reactor.sendMessage( server_connection1, response ) );
-    assert( server_connection1->hasPendingOutput() );
+    assert(reactor.sendMessage(server_connection1, response));
+    assert(server_connection1->hasPendingOutput());
 
-    for(int i = 0; i < 3 && server_connection1->hasPendingOutput(); ++i){
+    for (int i = 0; i < 3 && server_connection1->hasPendingOutput(); ++i) {
         const auto output_messages = reactor.pollOnce(1000);
-
-        // client1 此时没有向服务端发送新的业务消息，
-        // 因此这些 poll 不应该产生接收消息
         assert(output_messages.empty());
     }
 
-    assert( !server_connection1->hasPendingOutput() );
-
-    // ==================================================
-    // 5. 客户端读取 Reactor 发出的完整 Message
-    // ==================================================
+    assert(!server_connection1->hasPendingOutput());
 
     sockaddr_in dummy_addr{};
-
-    dts::Connection client1_connection( client1, dummy_addr );
+    dts::Connection client1_connection(client1, dummy_addr);
 
     const dts::Message received_response = client1_connection.receiveMessage();
 
-    assert( received_response.header.type == dts::MessageType::TASK_STATUS );
-    assert( received_response.data == "reactor-output-test" );
-    // ==================================================
-    // 6. 清理连接
-    // ==================================================
+    assert(received_response.header.type == dts::MessageType::TASK_STATUS);
+    assert(received_response.data == "reactor-output-test");
 
-    // client1 已经交给 Connection 对象管理，
-    // 因此通过 disconnect() 关闭，不能再 ::close(client1)
     client1_connection.disconnect();
-
     ::close(client2);
 
-    // 让 Reactor 观察 peer close，并清理服务端 Connection
     reactor.pollOnce(1000);
-
     server.stop();
 
     std::cout << "tcp_reactor_test passed" << std::endl;
-
     return 0;
 }

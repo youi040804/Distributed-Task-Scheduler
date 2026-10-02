@@ -140,60 +140,68 @@ namespace dts{
     std::vector<Message> Connection::receiveAvailable() {
         std::vector<Message> messages;
 
-        if (fd_ < 0 || receive_error_) {
+        if (fd_ < 0 || fatal_receive_error_ || peer_read_closed_){
             return messages;
         }
 
         char buffer[4096];
 
         while (true) {
-            const ssize_t n = ::recv(fd_, buffer, sizeof(buffer), 0);
+            const ssize_t n = ::recv(
+                fd_,
+                buffer,
+                sizeof(buffer),
+                0
+            );
 
             if (n > 0) {
-                // 本次收到的字节交给增量解帧器
-                const std::string data( buffer, static_cast<std::size_t>(n) );
+                const std::string data(buffer, static_cast<std::size_t>(n));
 
                 auto decoded = frame_decoder_.feed(data);
 
-                // 把本次解析出的所有完整 Message 汇总起来
-                messages.insert( messages.end(), decoded.begin(), decoded.end() );
+                messages.insert(
+                    messages.end(),
+                    decoded.begin(),
+                    decoded.end()
+                );
 
-                // 协议格式错误
                 if (frame_decoder_.hasError()) {
-                    receive_error_ = true;
+                    fatal_receive_error_ = true;
                     break;
                 }
 
-                // 继续 recv，直到把当前已经到达的数据读干净
                 continue;
             }
 
             if (n == 0) {
-                // 对端执行了正常关闭
-                receive_error_ = true;
+                // TCP EOF：
+                // 对端不会再发送数据，但仍可能等待我们发送响应
+                peer_read_closed_ = true;
                 break;
             }
 
-            // n == -1
             if (errno == EINTR) {
-                // 被信号中断，不代表连接有问题，重新 recv
                 continue;
             }
 
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                // 非阻塞 socket 当前已经没有更多数据可读,正常结束，不是错误
                 break;
             }
 
-            receive_error_ = true;
+            fatal_receive_error_ = true;
             break;
         }
 
         return messages;
     }
 
-    bool Connection::hasReceiveError() const {
-        return receive_error_;
+  
+    bool Connection::hasFatalReceiveError() const {
+        return fatal_receive_error_;
+    }
+
+    bool Connection::isPeerReadClosed() const {
+        return peer_read_closed_;
     }
 
     bool Connection::hasPendingOutput() const {
@@ -250,7 +258,7 @@ namespace dts{
 
         return true;
     }
-    
+
     void Connection::disconnect(){
         int socketfd=fd();
         //socket文件描述符一般不为0

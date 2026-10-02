@@ -20,7 +20,9 @@ private:
     mutable std::mutex send_mutex_;
 
     FrameDecoder frame_decoder_;
-    bool receive_error_ = false;
+    
+    bool fatal_receive_error_ = false;
+    bool peer_read_closed_ = false;
 
     std::string output_buffer_;
     std::size_t output_offset_ = 0;
@@ -41,7 +43,9 @@ public:
     std::string recv();//底层recv
 
     std::vector<Message> receiveAvailable();
-    bool hasReceiveError() const;
+  
+    bool hasFatalReceiveError() const;
+    bool isPeerReadClosed() const;
     
     bool setNonBlocking();
     
