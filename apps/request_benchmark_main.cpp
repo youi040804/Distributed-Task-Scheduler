@@ -72,7 +72,7 @@ double percentile(std::vector<double> values, double p) {
     return values[lower] * (1.0 - weight) + values[upper] * weight;
 }
 
-bool queueQuery(ConnectionState& state, int task_id) {
+void queueQuery(ConnectionState& state, int task_id) {
     dts::TaskQueryInfo query;
     query.task_id = task_id;
 
@@ -85,9 +85,8 @@ bool queueQuery(ConnectionState& state, int task_id) {
     state.request_in_flight = true;
     state.request_start = Clock::now();
     ++state.requests_sent;
-
-    return true;
 }
+
 bool flushOutput(ConnectionState& state) {
     while (state.output_offset < state.output.size()) {
         const char* data = state.output.data() + state.output_offset;
@@ -113,15 +112,12 @@ bool modifyInterest(int epoll_fd, const ConnectionState& state) {
     epoll_event event{};
     event.data.fd = state.fd;
     event.events = EPOLLIN | EPOLLRDHUP;
-
     if (state.output_offset < state.output.size()) event.events |= EPOLLOUT;
-
     return ::epoll_ctl(epoll_fd, EPOLL_CTL_MOD, state.fd, &event) == 0;
 }
 
 void closeConnection(int epoll_fd, ConnectionState& state) {
     if (state.fd < 0) return;
-
     ::epoll_ctl(epoll_fd, EPOLL_CTL_DEL, state.fd, nullptr);
     ::close(state.fd);
     state.fd = -1;
@@ -184,8 +180,12 @@ int main(int argc, char* argv[]) {
     }
 
     std::vector<ConnectionState> states(static_cast<std::size_t>(connection_count));
-    std::vector<int> fd_to_index;
-    fd_to_index.resize(1024, -1);
+    std::vector<int> fd_to_index(1024, -1);
+    std::vector<epoll_event> events(static_cast<std::size_t>(std::min(connection_count, 4096)));
+
+    const std::uint64_t total_requests =
+        static_cast<std::uint64_t>(connection_count) *
+        static_cast<std::uint64_t>(requests_per_connection);
 
     int connected = 0;
     int connection_failed = 0;
@@ -193,21 +193,21 @@ int main(int argc, char* argv[]) {
     std::cout << "[Request Benchmark] target=" << endpoint << std::endl;
     std::cout << "[Request Benchmark] requested_connections=" << connection_count << std::endl;
     std::cout << "[Request Benchmark] requests_per_connection=" << requests_per_connection << std::endl;
-    std::cout << "[Request Benchmark] total_requests="
-              << static_cast<std::uint64_t>(connection_count) *
-                     static_cast<std::uint64_t>(requests_per_connection)
-              << std::endl;
+    std::cout << "[Request Benchmark] total_requests=" << total_requests << std::endl;
+
+    const auto connection_start = Clock::now();
 
     for (int i = 0; i < connection_count; ++i) {
         const int fd = ::socket(AF_INET, SOCK_STREAM, 0);
         if (fd < 0 || !setNonBlocking(fd)) {
             if (fd >= 0) ::close(fd);
-            ++connection_failed;
             states[static_cast<std::size_t>(i)].failed = true;
+            ++connection_failed;
             continue;
         }
 
-        states[static_cast<std::size_t>(i)].fd = fd;
+        auto& state = states[static_cast<std::size_t>(i)];
+        state.fd = fd;
 
         if (static_cast<std::size_t>(fd) >= fd_to_index.size()) {
             fd_to_index.resize(static_cast<std::size_t>(fd) + 1, -1);
@@ -216,10 +216,10 @@ int main(int argc, char* argv[]) {
 
         const int rc = ::connect(fd, reinterpret_cast<sockaddr*>(&address), sizeof(address));
         if (rc < 0 && errno != EINPROGRESS) {
+            state.failed = true;
             ++connection_failed;
-            states[static_cast<std::size_t>(i)].failed = true;
             ::close(fd);
-            states[static_cast<std::size_t>(i)].fd = -1;
+            state.fd = -1;
             continue;
         }
 
@@ -228,33 +228,25 @@ int main(int argc, char* argv[]) {
         event.events = EPOLLIN | EPOLLOUT | EPOLLRDHUP;
 
         if (::epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &event) != 0) {
+            state.failed = true;
             ++connection_failed;
-            states[static_cast<std::size_t>(i)].failed = true;
             ::close(fd);
-            states[static_cast<std::size_t>(i)].fd = -1;
+            state.fd = -1;
             continue;
         }
 
         if (rc == 0) {
-            states[static_cast<std::size_t>(i)].connected = true;
+            state.connected = true;
             ++connected;
+            modifyInterest(epoll_fd, state);
         }
     }
 
-    std::vector<epoll_event> events(static_cast<std::size_t>(std::min(connection_count, 4096)));
-    std::vector<double> latencies_ms;
+    const auto connection_deadline =
+        connection_start + std::chrono::milliseconds(timeout_ms);
 
-    const std::uint64_t expected_requests =
-        static_cast<std::uint64_t>(connection_count) *
-        static_cast<std::uint64_t>(requests_per_connection);
-
-    std::uint64_t responses = 0;
-    std::uint64_t request_failed = 0;
-
-    const auto benchmark_start = Clock::now();
-    const auto deadline = benchmark_start + std::chrono::milliseconds(timeout_ms);
-
-    while (Clock::now() < deadline && responses + request_failed < expected_requests) {
+    while (connected + connection_failed < connection_count &&
+           Clock::now() < connection_deadline) {
         const int ready = ::epoll_wait(
             epoll_fd,
             events.data(),
@@ -264,7 +256,8 @@ int main(int argc, char* argv[]) {
 
         if (ready < 0) {
             if (errno == EINTR) continue;
-            std::cerr << "epoll_wait failed: " << std::strerror(errno) << std::endl;
+            std::cerr << "epoll_wait failed during connection phase: "
+                      << std::strerror(errno) << std::endl;
             break;
         }
 
@@ -278,9 +271,9 @@ int main(int argc, char* argv[]) {
             if (index < 0) continue;
 
             auto& state = states[static_cast<std::size_t>(index)];
-            if (state.fd != fd || state.failed) continue;
+            if (state.fd != fd || state.failed || state.connected) continue;
 
-            if (!state.connected && (event_mask & EPOLLOUT)) {
+            if (event_mask & (EPOLLOUT | EPOLLERR | EPOLLHUP)) {
                 int socket_error = 0;
                 socklen_t error_length = sizeof(socket_error);
 
@@ -295,33 +288,95 @@ int main(int argc, char* argv[]) {
                 state.connected = true;
                 ++connected;
 
-                const int task_id = 1000000000 + index;
-                queueQuery(state, task_id);
-
-                if (!flushOutput(state) || !modifyInterest(epoll_fd, state)) {
+                if (!modifyInterest(epoll_fd, state)) {
+                    state.connected = false;
                     state.failed = true;
-                    request_failed += static_cast<std::uint64_t>(
-                        requests_per_connection - state.responses_received
-                    );
+                    --connected;
+                    ++connection_failed;
                     closeConnection(epoll_fd, state);
-                    continue;
                 }
             }
+            
+        }
+    }
 
-            if (state.connected && !state.request_in_flight &&
-                state.requests_sent < requests_per_connection) {
-                const int task_id = 1000000000 + index;
-                queueQuery(state, task_id);
+    for (auto& state : states) {
+        if (!state.connected && !state.failed) {
+            state.failed = true;
+            ++connection_failed;
+            closeConnection(epoll_fd, state);
+        }
+    }
 
-                if (!flushOutput(state) || !modifyInterest(epoll_fd, state)) {
-                    state.failed = true;
-                    request_failed += static_cast<std::uint64_t>(
-                        requests_per_connection - state.responses_received
-                    );
-                    closeConnection(epoll_fd, state);
-                    continue;
-                }
-            }
+    const auto connection_end = Clock::now();
+    const double connection_elapsed =
+        std::chrono::duration<double>(connection_end - connection_start).count();
+
+    const std::uint64_t unavailable_requests =
+        static_cast<std::uint64_t>(connection_failed) *
+        static_cast<std::uint64_t>(requests_per_connection);
+
+    std::uint64_t requests_sent = 0;
+    std::uint64_t responses = 0;
+    std::uint64_t request_failed = 0;
+    std::vector<double> latencies_ms;
+    latencies_ms.reserve(
+        static_cast<std::size_t>(connected) *
+        static_cast<std::size_t>(requests_per_connection)
+    );
+
+    const auto request_start = Clock::now();
+
+    for (int i = 0; i < connection_count; ++i) {
+        auto& state = states[static_cast<std::size_t>(i)];
+        if (!state.connected || state.failed) continue;
+
+        queueQuery(state, 1000000000 + i);
+        ++requests_sent;
+
+        if (!flushOutput(state) || !modifyInterest(epoll_fd, state)) {
+            state.failed = true;
+            request_failed += static_cast<std::uint64_t>(
+                requests_per_connection - state.responses_received
+            );
+            closeConnection(epoll_fd, state);
+        }
+    }
+
+    const std::uint64_t expected_responses =
+        static_cast<std::uint64_t>(connected) *
+        static_cast<std::uint64_t>(requests_per_connection);
+
+    const auto request_deadline =
+        request_start + std::chrono::milliseconds(timeout_ms);
+
+    while (Clock::now() < request_deadline &&
+           responses + request_failed < expected_responses) {
+        const int ready = ::epoll_wait(
+            epoll_fd,
+            events.data(),
+            static_cast<int>(events.size()),
+            100
+        );
+
+        if (ready < 0) {
+            if (errno == EINTR) continue;
+            std::cerr << "epoll_wait failed during request phase: "
+                      << std::strerror(errno) << std::endl;
+            break;
+        }
+
+        for (int i = 0; i < ready; ++i) {
+            const int fd = events[static_cast<std::size_t>(i)].data.fd;
+            const uint32_t event_mask = events[static_cast<std::size_t>(i)].events;
+
+            if (fd < 0 || static_cast<std::size_t>(fd) >= fd_to_index.size()) continue;
+
+            const int index = fd_to_index[static_cast<std::size_t>(fd)];
+            if (index < 0) continue;
+
+            auto& state = states[static_cast<std::size_t>(index)];
+            if (state.fd != fd || state.failed || !state.connected) continue;
 
             if ((event_mask & EPOLLOUT) && state.output_offset < state.output.size()) {
                 if (!flushOutput(state) || !modifyInterest(epoll_fd, state)) {
@@ -366,19 +421,19 @@ int main(int argc, char* argv[]) {
                             }
 
                             const auto now = Clock::now();
-                            const double latency =
+                            latencies_ms.push_back(
                                 std::chrono::duration<double, std::milli>(
                                     now - state.request_start
-                                ).count();
+                                ).count()
+                            );
 
-                            latencies_ms.push_back(latency);
                             state.request_in_flight = false;
                             ++state.responses_received;
                             ++responses;
 
                             if (state.responses_received < requests_per_connection) {
-                                const int task_id = 1000000000 + index;
-                                queueQuery(state, task_id);
+                                queueQuery(state, 1000000000 + index);
+                                ++requests_sent;
 
                                 if (!flushOutput(state) || !modifyInterest(epoll_fd, state)) {
                                     state.failed = true;
@@ -388,8 +443,10 @@ int main(int argc, char* argv[]) {
                                     closeConnection(epoll_fd, state);
                                     break;
                                 }
-                            } else {
-                                modifyInterest(epoll_fd, state);
+                            } else if (!modifyInterest(epoll_fd, state)) {
+                                state.failed = true;
+                                closeConnection(epoll_fd, state);
+                                break;
                             }
                         }
 
@@ -428,28 +485,35 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    const auto benchmark_end = Clock::now();
-    const double elapsed =
-        std::chrono::duration<double>(benchmark_end - benchmark_start).count();
+    const auto request_end = Clock::now();
+    const double request_elapsed =
+        std::chrono::duration<double>(request_end - request_start).count();
 
-    std::uint64_t timed_out = 0;
-    if (responses + request_failed < expected_requests) {
-        timed_out = expected_requests - responses - request_failed;
-    }
+    const std::uint64_t timed_out =
+        expected_responses > responses + request_failed
+            ? expected_responses - responses - request_failed
+            : 0;
+
+    const std::uint64_t sent_without_response =
+        requests_sent > responses ? requests_sent - responses : 0;
 
     for (auto& state : states) closeConnection(epoll_fd, state);
     ::close(epoll_fd);
 
     std::cout << "[Request Benchmark] connected=" << connected << std::endl;
     std::cout << "[Request Benchmark] connection_failed=" << connection_failed << std::endl;
+    std::cout << "[Request Benchmark] unavailable_requests=" << unavailable_requests << std::endl;
+    std::cout << "[Request Benchmark] requests_sent=" << requests_sent << std::endl;
     std::cout << "[Request Benchmark] responses=" << responses << std::endl;
     std::cout << "[Request Benchmark] request_failed=" << request_failed << std::endl;
     std::cout << "[Request Benchmark] timed_out=" << timed_out << std::endl;
-    std::cout << "[Request Benchmark] elapsed=" << elapsed << " s" << std::endl;
+    std::cout << "[Request Benchmark] sent_without_response=" << sent_without_response << std::endl;
+    std::cout << "[Request Benchmark] connection_elapsed=" << connection_elapsed << " s" << std::endl;
+    std::cout << "[Request Benchmark] request_elapsed=" << request_elapsed << " s" << std::endl;
 
-    if (elapsed > 0.0) {
+    if (request_elapsed > 0.0) {
         std::cout << "[Request Benchmark] throughput="
-                  << static_cast<double>(responses) / elapsed
+                  << static_cast<double>(responses) / request_elapsed
                   << " requests/s" << std::endl;
     }
 
@@ -462,5 +526,10 @@ int main(int argc, char* argv[]) {
                   << percentile(latencies_ms, 0.99) << " ms" << std::endl;
     }
 
-    return responses == expected_requests ? 0 : 1;
+    return connected == connection_count &&
+           responses == total_requests &&
+           request_failed == 0 &&
+           timed_out == 0
+               ? 0
+               : 1;
 }
