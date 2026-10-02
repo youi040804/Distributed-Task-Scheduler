@@ -1,3 +1,4 @@
+#include <sys/epoll.h>
 #include "network/TCPReactor.h"
 
 namespace dts {
@@ -69,9 +70,54 @@ TCPReactor::pollOnce(int timeout_ms) {
         auto connection = server_.getConnection(fd);
 
         if (!connection) {
-            // 理论上不应该出现，但避免处理已经移除的 fd
             poller_.remove(fd);
             continue;
+        }
+
+        bool shouldRemove = false;
+
+        // ========================================================
+        // EPOLLIN：读取当前已经到达的数据
+        // ========================================================
+        if ((event.events & EPOLLIN) != 0) {
+            const auto messages = connection->receiveAvailable();
+
+            for (const auto& message : messages) {
+                received_messages.emplace_back( connection, message );
+            }
+
+            if (connection->hasReceiveError()) {
+                shouldRemove = true;
+            }
+        }
+
+        // ========================================================
+        // EPOLLOUT：继续发送 output buffer 中积压的数据
+        // ========================================================
+        if (!shouldRemove && (event.events & EPOLLOUT) != 0) {
+
+            if (!connection->flushOutput()) {
+                shouldRemove = true;
+            } else if (!connection->hasPendingOutput()) {
+
+                // 已经全部发送完成
+                // 不再关注 EPOLLOUT，否则 writable socket 会造成 Reactor 空转
+                if (!poller_.modify(fd, EPOLLIN)) {
+                    shouldRemove = true;
+                }
+            }
+        }
+
+        // ========================================================
+        // socket error / hangup
+        // ========================================================
+        if ((event.events & (EPOLLERR | EPOLLHUP)) != 0) {
+            shouldRemove = true;
+        }
+
+        if (shouldRemove) {
+            poller_.remove(fd);
+            server_.removeConnection(fd);
         }
 
         const auto messages = connection->receiveAvailable();
@@ -91,4 +137,18 @@ TCPReactor::pollOnce(int timeout_ms) {
     return received_messages;
 }
 
+bool TCPReactor::enableWrite( const std::shared_ptr<Connection>& connection) {
+
+    if (!connection) {
+        return false;
+    }
+
+    const int fd = connection->fd();
+
+    if (fd < 0) {
+        return false;
+    }
+
+    return poller_.modify( fd, EPOLLIN | EPOLLOUT );
+}
 } // namespace dts
